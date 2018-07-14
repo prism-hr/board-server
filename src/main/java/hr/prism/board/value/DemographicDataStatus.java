@@ -1,6 +1,7 @@
 package hr.prism.board.value;
 
 import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Role;
 
 import java.time.LocalDate;
 
@@ -9,6 +10,8 @@ public class DemographicDataStatus {
     private boolean requireUserData;
 
     private boolean requireMemberData;
+
+    private Role role;
 
     private MemberCategory memberCategory;
 
@@ -33,6 +36,15 @@ public class DemographicDataStatus {
 
     public DemographicDataStatus setRequireMemberData(boolean requireMemberData) {
         this.requireMemberData = requireMemberData;
+        return this;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public DemographicDataStatus setRole(Role role) {
+        this.role = role;
         return this;
     }
 

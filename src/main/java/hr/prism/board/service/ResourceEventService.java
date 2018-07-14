@@ -10,6 +10,7 @@ import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
 import hr.prism.board.repository.ResourceEventRepository;
+import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.ResourceEventSummary;
 import hr.prism.board.workflow.Notification;
 import hr.prism.board.workflow.Notification.Attachment;
@@ -71,9 +72,14 @@ public class ResourceEventService {
 
     @SuppressWarnings("UnusedReturnValue")
     @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)
-    public ResourceEvent createPostView(Post post, User user, String ipAddress) {
+    public ResourceEvent createPostView(Post post, User user, String ipAddress,
+                                        DemographicDataStatus responseReadiness) {
         if (user == null && ipAddress == null) {
             throw new BoardException(UNIDENTIFIABLE_RESOURCE_EVENT, "No way to identify post viewer");
+        }
+
+        if (responseReadiness != null && responseReadiness.getRole() == ADMINISTRATOR) {
+            return null;
         }
 
         ResourceEvent resourceEvent =

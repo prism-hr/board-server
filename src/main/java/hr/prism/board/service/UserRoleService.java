@@ -56,7 +56,7 @@ public class UserRoleService {
         return userRoleRepository.findByUuid(uuid);
     }
 
-    public List<Role> getByResourceAndUser(Resource resource, User user) {
+    public List<UserRole> getByResourceAndUser(Resource resource, User user) {
         return userRoleRepository.findByResourceAndUser(resource, user);
     }
 

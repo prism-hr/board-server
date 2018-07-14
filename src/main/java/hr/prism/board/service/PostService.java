@@ -15,6 +15,7 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.validation.PostValidator;
+import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.value.ResourceFilter.ResourceFilterList;
@@ -57,6 +58,8 @@ import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
+import hr.prism.board.event.ActivityEvent;
+
 @Service
 @Transactional
 public class PostService {
@@ -87,6 +90,8 @@ public class PostService {
 
     private final ResourceTaskService resourceTaskService;
 
+    private final DepartmentUserService departmentUserService;
+
     private final PostValidator postValidator;
 
     private final EventProducer eventProducer;
@@ -99,8 +104,8 @@ public class PostService {
                        ResourceService resourceService, PostPatchService postPatchService,
                        UserRoleService userRoleService, UserService userService, ActionService actionService,
                        ResourceEventService resourceEventService, PostResponseService postResponseService,
-                       ResourceTaskService resourceTaskService, PostValidator postValidator,
-                       EventProducer eventProducer, EntityManager entityManager) {
+                       ResourceTaskService resourceTaskService, DepartmentUserService departmentUserService,
+                       PostValidator postValidator, EventProducer eventProducer, EntityManager entityManager) {
         this.postRepository = postRepository;
         this.postDAO = postDAO;
         this.documentService = documentService;
@@ -114,6 +119,7 @@ public class PostService {
         this.resourceEventService = resourceEventService;
         this.postResponseService = postResponseService;
         this.resourceTaskService = resourceTaskService;
+        this.departmentUserService = departmentUserService;
         this.postValidator = postValidator;
         this.eventProducer = eventProducer;
         this.entityManager = entityManager;
@@ -127,11 +133,13 @@ public class PostService {
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, VIEW, () -> post);
 
+        DemographicDataStatus responseReadiness =
+            departmentUserService.makeDemographicDataStatus(user, (Department) post.getParent().getParent());
         if (recordView) {
-            resourceEventService.createPostView(post, user, ipAddress);
+            resourceEventService.createPostView(post, user, ipAddress, responseReadiness);
         }
 
-        postResponseService.addPostResponseReadiness(post, user);
+        postResponseService.addPostResponseReadiness(post, user, responseReadiness);
         postResponseService.addPostResponse(post, user);
         return post;
     }
@@ -203,7 +211,10 @@ public class PostService {
         });
 
         postValidator.checkExistingRelation(createdPost);
-        postResponseService.addPostResponseReadiness(createdPost, user);
+
+        DemographicDataStatus responseReadiness =
+            departmentUserService.makeDemographicDataStatus(user, (Department) createdPost.getParent().getParent());
+        postResponseService.addPostResponseReadiness(createdPost, user, responseReadiness);
         return createdPost;
     }
 
@@ -228,7 +239,10 @@ public class PostService {
                 }
             }
 
-            postResponseService.addPostResponseReadiness(post, user);
+            DemographicDataStatus responseReadiness =
+                departmentUserService.makeDemographicDataStatus(user, (Department) post.getParent().getParent());
+            postResponseService.addPostResponseReadiness(post, user, responseReadiness);
+
             postResponseService.addPostResponse(post, user);
             return post;
         });

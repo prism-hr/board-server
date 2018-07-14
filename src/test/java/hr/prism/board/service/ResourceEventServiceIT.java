@@ -11,6 +11,7 @@ import hr.prism.board.event.NotificationEvent;
 import hr.prism.board.exception.BoardDuplicateException;
 import hr.prism.board.exception.BoardException;
 import hr.prism.board.exception.BoardForbiddenException;
+import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.workflow.Notification;
 import org.junit.After;
 import org.junit.Test;
@@ -33,6 +34,7 @@ import static hr.prism.board.enums.Notification.RESPOND_POST_NOTIFICATION;
 import static hr.prism.board.enums.ResourceEvent.REFERRAL;
 import static hr.prism.board.enums.ResourceEvent.VIEW;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
+import static hr.prism.board.enums.Role.MEMBER;
 import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static java.time.LocalDateTime.now;
@@ -76,13 +78,14 @@ public class ResourceEventServiceIT {
     }
 
     @Test
-    public void createPostView_successWhenUser() {
+    public void createPostView_successWhenMember() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             LocalDateTime runTime = now().minusSeconds(1L);
             Post post = (Post) resourceService.getById(3L);
             User user = userService.getById(1L);
 
-            ResourceEvent resourceEvent = resourceEventService.createPostView(post, user, "ipAddress");
+            ResourceEvent resourceEvent = resourceEventService.createPostView(post, user, "ipAddress",
+                new DemographicDataStatus().setRole(MEMBER));
             Post updatedPost = (Post) resourceService.getById(3L);
 
             assertNotNull(resourceEvent.getId());
@@ -104,12 +107,37 @@ public class ResourceEventServiceIT {
     }
 
     @Test
+    public void createPostView_successWhenAdministrator() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            Post post = (Post) resourceService.getById(3L);
+            User user = userService.getById(1L);
+
+            ResourceEvent resourceEvent = resourceEventService.createPostView(post, user, "ipAddress",
+                new DemographicDataStatus().setRole(ADMINISTRATOR));
+            Post updatedPost = (Post) resourceService.getById(3L);
+
+            assertNull(resourceEvent);
+
+            assertNull(updatedPost.getViewCount());
+            assertNull(updatedPost.getLastViewTimestamp());
+            assertNull(updatedPost.getReferralCount());
+            assertNull(updatedPost.getLastReferralTimestamp());
+            assertNull(updatedPost.getResponseCount());
+            assertNull(updatedPost.getLastResponseTimestamp());
+
+            verifyOtherPost();
+            return null;
+        });
+    }
+
+    @Test
     public void createPostView_successWhenIpAddress() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             LocalDateTime runTime = now().minusSeconds(1L);
             Post post = (Post) resourceService.getById(3L);
 
-            ResourceEvent resourceEvent = resourceEventService.createPostView(post, null, "ipAddress");
+            ResourceEvent resourceEvent = resourceEventService.createPostView(post, null, "ipAddress",
+                new DemographicDataStatus().setRole(MEMBER));
             Post updatedPost = (Post) resourceService.getById(3L);
 
             assertNotNull(resourceEvent.getId());
@@ -132,7 +160,8 @@ public class ResourceEventServiceIT {
 
     @Test
     public void createPostView_failureWhenUserAndIpAddressNull() {
-        assertThatThrownBy(() -> resourceEventService.createPostView(new Post(), null, null))
+        assertThatThrownBy(() -> resourceEventService.createPostView(
+            null, null, null, null))
             .isExactlyInstanceOf(BoardException.class)
             .hasFieldOrPropertyWithValue("exceptionCode", UNIDENTIFIABLE_RESOURCE_EVENT);
     }

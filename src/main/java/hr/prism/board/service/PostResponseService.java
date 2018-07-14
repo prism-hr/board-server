@@ -98,10 +98,8 @@ public class PostResponseService {
         return resourceEvent.setViewed(true);
     }
 
-    public void addPostResponseReadiness(Post post, User user) {
+    public void addPostResponseReadiness(Post post, User user, DemographicDataStatus responseReadiness) {
         if (user != null && actionService.canExecuteAction(post, PURSUE)) {
-            DemographicDataStatus responseReadiness =
-                departmentUserService.makeDemographicDataStatus(user, (Department) post.getParent().getParent());
             post.setDemographicDataStatus(responseReadiness);
             if (responseReadiness.isReady() && post.getApplyEmail() == null) {
                 resourceEventService.createPostReferral(post, user);

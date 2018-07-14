@@ -18,12 +18,12 @@ public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
     UserRole findByUuid(String uuid);
 
     @Query(value =
-        "select userRole.role " +
+        "select userRole " +
             "from UserRole userRole " +
             "where userRole.resource = :resource " +
             "and userRole.user = :user")
     @SuppressWarnings("SpringDataRepositoryMethodReturnTypeInspection")
-    List<Role> findByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
+    List<UserRole> findByResourceAndUser(@Param("resource") Resource resource, @Param("user") User user);
 
     List<UserRole> findByResourceAndRole(Resource resource, Role role);
 

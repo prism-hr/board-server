@@ -4,6 +4,7 @@ import hr.prism.board.DbTestContext;
 import hr.prism.board.domain.Department;
 import hr.prism.board.domain.User;
 import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Role;
 import hr.prism.board.value.DemographicDataStatus;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,6 +17,8 @@ import javax.inject.Inject;
 import java.time.LocalDate;
 
 import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
+import static hr.prism.board.enums.Role.ADMINISTRATOR;
+import static hr.prism.board.enums.Role.MEMBER;
 import static org.junit.Assert.assertEquals;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
@@ -38,6 +41,21 @@ public class DepartmentUserServiceIT {
     private PlatformTransactionManager platformTransactionManager;
 
     @Test
+    public void makeDemographicDataStatus_successWhenUserNul() {
+        new TransactionTemplate(platformTransactionManager).execute(status -> {
+            Department department = (Department) resourceService.getById(1L);
+
+            DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(null, department);
+
+            verifyDemographicData(dataStatus, true, true,
+                null, null, null, null,
+                null);
+
+            return null;
+        });
+    }
+
+    @Test
     public void makeDemographicDataStatus_successWhenUserAndMemberComplete() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             User user = userService.getById(1L);
@@ -45,7 +63,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, false, false,
+            verifyDemographicData(dataStatus, false, false, MEMBER,
                 UNDERGRADUATE_STUDENT, "memberProgram", 2018,
                 LocalDate.of(2020, 6, 1));
 
@@ -61,7 +79,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, true, true,
+            verifyDemographicData(dataStatus, true, true, MEMBER,
                 null, null, null, null);
 
             return null;
@@ -76,7 +94,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, false, true,
+            verifyDemographicData(dataStatus, false, true, MEMBER,
                 null, null, null, null);
 
             return null;
@@ -91,7 +109,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, true, false,
+            verifyDemographicData(dataStatus, true, false, MEMBER,
                 UNDERGRADUATE_STUDENT, "memberProgram", 2018,
                 LocalDate.of(2020, 6, 1));
 
@@ -108,7 +126,7 @@ public class DepartmentUserServiceIT {
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
 
-            verifyDemographicData(dataStatus, false, false,
+            verifyDemographicData(dataStatus, false, false, MEMBER,
                 null, null, null, null);
 
             return null;
@@ -123,7 +141,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, true, false,
+            verifyDemographicData(dataStatus, true, false, MEMBER,
                 null, null, null, null);
 
             return null;
@@ -139,7 +157,7 @@ public class DepartmentUserServiceIT {
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
 
-            verifyDemographicData(dataStatus, false, false,
+            verifyDemographicData(dataStatus, false, false, ADMINISTRATOR,
                 null, null, null, null);
 
             return null;
@@ -154,7 +172,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, true, false,
+            verifyDemographicData(dataStatus, true, false, ADMINISTRATOR,
                 null, null, null, null);
 
             return null;
@@ -169,7 +187,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, false, true,
+            verifyDemographicData(dataStatus, false, true, MEMBER,
                 UNDERGRADUATE_STUDENT, "memberProgram", 2018,
                 LocalDate.of(2020, 6, 1));
 
@@ -185,7 +203,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, true, true,
+            verifyDemographicData(dataStatus, true, true, MEMBER,
                 UNDERGRADUATE_STUDENT, "memberProgram", 2018,
                 LocalDate.of(2020, 6, 1));
 
@@ -201,7 +219,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, true, false,
+            verifyDemographicData(dataStatus, true, false, MEMBER,
                 UNDERGRADUATE_STUDENT, "memberProgram", 2018,
                 LocalDate.of(2020, 6, 1));
 
@@ -217,7 +235,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, true, false,
+            verifyDemographicData(dataStatus, true, false, MEMBER,
                 UNDERGRADUATE_STUDENT, "memberProgram", 2018,
                 LocalDate.of(2020, 6, 1));
 
@@ -233,7 +251,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, true, false,
+            verifyDemographicData(dataStatus, true, false, MEMBER,
                 UNDERGRADUATE_STUDENT, "memberProgram", 2018,
                 LocalDate.of(2020, 6, 1));
 
@@ -249,7 +267,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, false, true,
+            verifyDemographicData(dataStatus, false, true, MEMBER,
                 UNDERGRADUATE_STUDENT, "memberProgram", 2018,
                 null);
 
@@ -265,7 +283,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, false, true,
+            verifyDemographicData(dataStatus, false, true, MEMBER,
                 UNDERGRADUATE_STUDENT, "memberProgram", null,
                 LocalDate.of(2020, 6, 1));
 
@@ -281,7 +299,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, false, true,
+            verifyDemographicData(dataStatus, false, true, MEMBER,
                 UNDERGRADUATE_STUDENT, null, 2018,
                 LocalDate.of(2020, 6, 1));
 
@@ -297,7 +315,7 @@ public class DepartmentUserServiceIT {
 
             DemographicDataStatus dataStatus = departmentUserService.makeDemographicDataStatus(user, department);
 
-            verifyDemographicData(dataStatus, false, true,
+            verifyDemographicData(dataStatus, false, true, MEMBER,
                 null, "memberProgram", 2018,
                 LocalDate.of(2020, 6, 1));
 
@@ -306,11 +324,12 @@ public class DepartmentUserServiceIT {
     }
 
     private void verifyDemographicData(DemographicDataStatus dataStatus, Boolean expectedRequireUserData,
-                                       Boolean expectedRequireMemberData, MemberCategory expectedMemberCategory,
-                                       String expectedMemberProgram, Integer expectedMemberYear,
-                                       LocalDate expectedExpiryDate) {
+                                       Boolean expectedRequireMemberData, Role expectedRole,
+                                       MemberCategory expectedMemberCategory, String expectedMemberProgram,
+                                       Integer expectedMemberYear, LocalDate expectedExpiryDate) {
         assertEquals(expectedRequireUserData, dataStatus.isRequireUserData());
         assertEquals(expectedRequireMemberData, dataStatus.isRequireMemberData());
+        assertEquals(expectedRole, dataStatus.getRole());
         assertEquals(expectedMemberCategory, dataStatus.getMemberCategory());
         assertEquals(expectedMemberProgram, dataStatus.getMemberProgram());
         assertEquals(expectedMemberYear, dataStatus.getMemberYear());

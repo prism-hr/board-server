@@ -258,42 +258,34 @@ public class DepartmentUserService {
 
     DemographicDataStatus makeDemographicDataStatus(User user, Department department) {
         DemographicDataStatus responseReadiness = new DemographicDataStatus();
+        if (user == null) {
+            return responseReadiness
+                .setRequireUserData(true)
+                .setRequireMemberData(true);
+        }
+
         if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
             // User data incomplete
             responseReadiness.setRequireUserData(true);
         }
 
-        if (department.getMemberCategories().isEmpty()) {
-            // No member data required
-            return responseReadiness;
-        }
+        List<UserRole> userRoles = userRoleService.getByResourceAndUser(department, user);
+        UserRole memberRole =
+            userRoles.stream()
+                .filter(userRole -> userRole.getRole().equals(MEMBER))
+                .findFirst()
+                .orElse(null);
 
-        UserRole userRole = userRoleService.getByResourceUserAndRole(department, user, MEMBER);
-        if (userRole == null) {
-            // Must be administrator - no member data required
-            return responseReadiness;
-        }
+        UserRole administratorRole =
+            userRoles.stream()
+                .filter(userRole -> userRole.getRole().equals(ADMINISTRATOR))
+                .findFirst()
+                .orElse(null);
 
-        MemberCategory memberCategory = userRole.getMemberCategory();
-        String memberProgram = userRole.getMemberProgram();
-        Integer memberYear = userRole.getMemberYear();
-        LocalDate expiryDate = userRole.getExpiryDate();
-
-        responseReadiness
-            .setMemberCategory(memberCategory)
-            .setMemberProgram(memberProgram)
-            .setMemberYear(memberYear)
-            .setExpiryDate(expiryDate);
-
-        if (Stream.of(memberCategory, memberProgram, memberYear, expiryDate).anyMatch(Objects::isNull)) {
-            // Member data incomplete
-            return responseReadiness.setRequireMemberData(true);
-        }
-
-        LocalDate academicYearStart = getAcademicYearStart();
-        if (academicYearStart.isAfter(userRole.getMemberDate())) {
-            // Member data out of date
-            return responseReadiness.setRequireMemberData(true);
+        if (memberRole != null) {
+            return addMemberRoleData(responseReadiness, department, memberRole);
+        } else if (administratorRole != null) {
+            return responseReadiness.setRole(ADMINISTRATOR);
         }
 
         // Member data complete and up to date
@@ -308,7 +300,10 @@ public class DepartmentUserService {
         switch (type) {
             case STAFF:
                 List<Role> newRoles = ((StaffDTO) userRoleDTO).getRoles();
-                List<Role> oldRoles = userRoleService.getByResourceAndUser(department, userCreateUpdate);
+                List<Role> oldRoles =
+                    userRoleService.getByResourceAndUser(department, userCreateUpdate).stream()
+                        .map(UserRole::getRole)
+                        .collect(toList());
 
                 List<UserRole> createdUserRoles =
                     newRoles
@@ -416,6 +411,39 @@ public class DepartmentUserService {
         }
 
         return userRoles;
+    }
+
+    private DemographicDataStatus addMemberRoleData(DemographicDataStatus responseReadiness, Department department,
+                                                    UserRole memberRole) {
+        responseReadiness.setRole(MEMBER);
+        if (department.getMemberCategories().isEmpty()) {
+            // No member data required
+            return responseReadiness;
+        }
+
+        MemberCategory memberCategory = memberRole.getMemberCategory();
+        String memberProgram = memberRole.getMemberProgram();
+        Integer memberYear = memberRole.getMemberYear();
+        LocalDate expiryDate = memberRole.getExpiryDate();
+
+        responseReadiness
+            .setMemberCategory(memberCategory)
+            .setMemberProgram(memberProgram)
+            .setMemberYear(memberYear)
+            .setExpiryDate(expiryDate);
+
+        if (Stream.of(memberCategory, memberProgram, memberYear, expiryDate).anyMatch(Objects::isNull)) {
+            // Member data incomplete
+            return responseReadiness.setRequireMemberData(true);
+        }
+
+        LocalDate academicYearStart = getAcademicYearStart();
+        if (academicYearStart.isAfter(memberRole.getMemberDate())) {
+            // Member data out of date
+            return responseReadiness.setRequireMemberData(true);
+        }
+
+        return responseReadiness;
     }
 
 }
