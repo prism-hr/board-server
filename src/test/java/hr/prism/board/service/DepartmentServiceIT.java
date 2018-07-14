@@ -804,6 +804,7 @@ public class DepartmentServiceIT {
         assertEquals(DRAFT, department.getState());
         assertEquals(DRAFT, department.getPreviousState());
         assertEquals(toStrings(expectedMemberCategories), department.getMemberCategoryStrings());
+        assertEquals("U516 D163 D163 S560", department.getIndexData());
 
         assertThat(department.getLastTaskCreationTimestamp()).isGreaterThanOrEqualTo(baseline);
         serviceHelper.verifyTimestamps(department, baseline);

@@ -2101,6 +2101,10 @@ public class PostServiceIT {
         assertEquals(ImmutableList.of("Employment", "Internship"), post.getPostCategoryStrings());
         assertEquals(
             toStrings(ImmutableList.of(UNDERGRADUATE_STUDENT, MASTER_STUDENT)), post.getMemberCategoryStrings());
+
+        assertEquals(
+            "U516 D163 A213 D163 A213 B630 A213 D163 A213 B630 A213 P230 S560 D261 L535 O625",
+            post.getIndexData());
     }
 
     @SuppressWarnings("Duplicates")

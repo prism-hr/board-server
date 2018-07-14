@@ -396,6 +396,7 @@ public class BoardServiceIT {
             assertEquals(ACCEPTED, board.getState());
             assertEquals(ACCEPTED, board.getPreviousState());
             assertEquals(ImmutableList.of("post category 1", "post category 2"), board.getPostCategoryStrings());
+            assertEquals("U516 D163 A213 D163 A213 B630", board.getIndexData());
             serviceHelper.verifyTimestamps(board, baseline);
         });
 
