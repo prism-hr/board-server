@@ -7,13 +7,17 @@ import org.hibernate.validator.constraints.Email;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static hr.prism.board.utils.BoardUtils.obfuscateEmail;
+import static java.util.stream.Collectors.joining;
 import static javax.persistence.EnumType.STRING;
 import static org.apache.commons.lang3.ObjectUtils.compare;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @Entity
 @Table(name = "user")
@@ -412,8 +416,15 @@ public class User extends BoardEntity implements Comparable<User> {
     }
 
     public User setIndexData() {
-        this.indexData = makeSoundex(
-            newArrayList(givenName, surname, email));
+        String indexData =
+            Stream.of(makeSoundex(newArrayList(givenName, surname)), email)
+                .filter(Objects::nonNull)
+                .collect(joining(" "));
+
+        if (isNotEmpty(indexData)) {
+            this.indexData = indexData;
+        }
+
         return this;
     }
 
