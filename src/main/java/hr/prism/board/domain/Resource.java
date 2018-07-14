@@ -6,6 +6,7 @@ import hr.prism.board.enums.Scope;
 import hr.prism.board.enums.State;
 import hr.prism.board.representation.ActionRepresentation;
 import hr.prism.board.representation.ChangeListRepresentation;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -315,10 +316,14 @@ public class Resource extends BoardEntity {
         String indexData = makeSoundex(
             newArrayList(name, summary));
 
-        setIndexData(
+        String combinedIndexData =
             Stream.of(parentIndexData, indexData)
                 .filter(Objects::nonNull)
-                .collect(joining(" ")));
+                .collect(joining(" "));
+
+        if (StringUtils.isNotEmpty(combinedIndexData)) {
+            setIndexData(combinedIndexData);
+        }
 
         this.quarter = makeQuarter(getCreatedTimestamp());
     }

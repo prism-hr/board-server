@@ -5,6 +5,7 @@ import hr.prism.board.enums.ExistingRelation;
 import hr.prism.board.enums.Scope;
 import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.PostStatistics;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.validator.constraints.Email;
 
 import javax.persistence.*;
@@ -357,10 +358,14 @@ public class Post extends Resource {
         String indexData = makeSoundex(
             newArrayList(getName(), getSummary(), description, location, organization));
 
-        setIndexData(
+        String combinedIndexData =
             Stream.of(parentIndexData, indexData)
                 .filter(Objects::nonNull)
-                .collect(joining(" ")));
+                .collect(joining(" "));
+
+        if (StringUtils.isNotEmpty(combinedIndexData)) {
+            setIndexData(combinedIndexData);
+        }
 
         setQuarter(makeQuarter(getCreatedTimestamp()));
     }

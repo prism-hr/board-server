@@ -6,6 +6,7 @@ import java.util.List;
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.ceil;
 import static java.util.Comparator.reverseOrder;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isNumeric;
@@ -82,7 +83,10 @@ public class ResourceUtils {
     }
 
     public static String makeQuarter(LocalDateTime createdTimestamp) {
-        return Integer.toString(createdTimestamp.getYear()) + (int) ceil((double) createdTimestamp.getMonthValue() / 3);
+        return ofNullable(createdTimestamp)
+            .map(timestamp ->
+                Integer.toString(timestamp.getYear()) + (int) ceil((double) timestamp.getMonthValue() / 3))
+            .orElse(null);
     }
 
 }
