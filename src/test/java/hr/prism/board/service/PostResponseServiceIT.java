@@ -17,6 +17,7 @@ import java.util.List;
 
 import static hr.prism.board.enums.Action.EDIT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
@@ -175,6 +176,12 @@ public class PostResponseServiceIT {
 
         verify(postResponseDAO, times(1))
             .getPostResponses(user, post, "master 25-29");
+    }
+
+    @Test
+    public void consumePostReferral_success() {
+        String redirect = postResponseService.consumePostReferral("referral");
+        assertEquals("", redirect);
     }
 
 }

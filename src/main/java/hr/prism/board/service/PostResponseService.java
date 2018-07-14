@@ -54,7 +54,6 @@ public class PostResponseService {
         this.entityManager = entityManager;
     }
 
-
     public ResourceEvent getPostResponse(User user, Long id, Long responseId) {
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, EDIT, () -> post);
