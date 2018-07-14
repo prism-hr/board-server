@@ -169,10 +169,11 @@ public class ResourceEventServiceIT {
     public void getAndConsumeReferral_success() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             LocalDateTime runTime = now().minusSeconds(1L);
-
-            resourceEventService.getAndConsumeReferral("referral");
             ResourceEvent resourceEvent = resourceEventService.getById(1L);
             Post updatedPost = (Post) resourceService.getById(3L);
+
+            ResourceEvent referral = resourceEventService.getAndConsumeReferral("referral");
+            assertEquals(resourceEvent, referral);
 
             assertEquals(MALE, resourceEvent.getGender());
             assertEquals(THIRTY_THIRTYNINE, resourceEvent.getAgeRange());
