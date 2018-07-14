@@ -88,6 +88,28 @@ public class PostResponseServiceIT {
         expectedResponse.setId(1L);
 
         assertThat(responses).containsExactly(expectedResponse);
+        assertFalse(responses.get(0).isViewed());
+
+        verify(actionService, times(1))
+            .executeAction(eq(user), eq(post), eq(EDIT), any(Execution.class));
+
+        verify(postResponseDAO, times(1))
+            .getPostResponses(user, post, null);
+    }
+
+    @Test
+    public void getPostResponses_successWhenActivityViewed() {
+        User user = userService.getById(2L);
+        Post post = (Post) resourceService.getById(3L);
+
+        List<ResourceEvent> responses =
+            postResponseService.getPostResponses(user, 3L, null);
+
+        ResourceEvent expectedResponse = new ResourceEvent();
+        expectedResponse.setId(1L);
+
+        assertThat(responses).containsExactly(expectedResponse);
+        assertTrue(responses.get(0).isViewed());
 
         verify(actionService, times(1))
             .executeAction(eq(user), eq(post), eq(EDIT), any(Execution.class));
@@ -108,6 +130,7 @@ public class PostResponseServiceIT {
         expectedResponse.setId(1L);
 
         assertThat(responses).containsExactly(expectedResponse);
+        assertFalse(responses.get(0).isViewed());
 
         verify(actionService, times(1))
             .executeAction(eq(user), eq(post), eq(EDIT), any(Execution.class));
@@ -118,12 +141,40 @@ public class PostResponseServiceIT {
 
     @Test
     public void getPostResponses_successWhenSomeTokensMatch() {
+        User user = userService.getById(1L);
+        Post post = (Post) resourceService.getById(3L);
 
+        List<ResourceEvent> responses =
+            postResponseService.getPostResponses(user, 3L, "19-24");
+
+        ResourceEvent expectedResponse = new ResourceEvent();
+        expectedResponse.setId(1L);
+
+        assertThat(responses).containsExactly(expectedResponse);
+        assertFalse(responses.get(0).isViewed());
+
+        verify(actionService, times(1))
+            .executeAction(eq(user), eq(post), eq(EDIT), any(Execution.class));
+
+        verify(postResponseDAO, times(1))
+            .getPostResponses(user, post, "19-24");
     }
 
     @Test
     public void getPostResponses_failureWhenNoTokensMatch() {
+        User user = userService.getById(1L);
+        Post post = (Post) resourceService.getById(3L);
 
+        List<ResourceEvent> responses =
+            postResponseService.getPostResponses(user, 3L, "master 25-29");
+
+        assertThat(responses).isEmpty();
+
+        verify(actionService, times(1))
+            .executeAction(eq(user), eq(post), eq(EDIT), any(Execution.class));
+
+        verify(postResponseDAO, times(1))
+            .getPostResponses(user, post, "master 25-29");
     }
 
 }

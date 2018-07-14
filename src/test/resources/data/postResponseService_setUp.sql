@@ -30,3 +30,7 @@ VALUES
 INSERT INTO activity (id, resource_id, resource_event_id, activity, filter_by_category, created_timestamp)
 VALUES
   (1, 3, 1, 'RESPOND_POST_ACTIVITY', 0, '2018-05-21 21:04:54.185');
+
+INSERT INTO activity_event (id, activity_id, user_id, event, created_timestamp)
+VALUES
+  (1, 1, 2, 'VIEW', '2018-05-21 21:04:54.185');
