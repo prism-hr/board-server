@@ -19,6 +19,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 public class BoardUtils {
 
@@ -122,14 +123,8 @@ public class BoardUtils {
             .flatMap(Arrays::stream)
             .filter(StringUtils::isNotEmpty)
             .map(StringUtils::stripAccents)
-            .map(str -> {
-                try {
-                    return SOUNDEX.encode(str);
-                } catch (IllegalArgumentException e) {
-                    throw new Error("Could not encode string: " + str, e);
-                }
-            })
-            .filter(StringUtils::isNotEmpty)
+            .filter(StringUtils::isAlphanumeric)
+            .map(BoardUtils::makeSoundexToken)
             .collect(joining(" "));
     }
 
@@ -150,6 +145,15 @@ public class BoardUtils {
 
         // Academic year started last year
         return LocalDate.of(baseline.getYear() - 1, 10, 1);
+    }
+
+    private static String makeSoundexToken(String string) {
+        try {
+            String soundexToken = SOUNDEX.encode(string);
+            return isEmpty(soundexToken) ? string : soundexToken;
+        } catch (IllegalArgumentException e) {
+            throw new Error("Could not encode string: " + string, e);
+        }
     }
 
 }

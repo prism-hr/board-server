@@ -45,7 +45,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 
 @DbTestContext
 @RunWith(SpringRunner.class)
-@Sql(scripts = {"classpath:data/tearDown.sql", "classpath:data/resourceEvent_setUp.sql"})
+@Sql(scripts = {"classpath:data/tearDown.sql", "classpath:data/resourceEventService_setUp.sql"})
 @Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
 public class ResourceEventServiceIT {
 
@@ -194,7 +194,7 @@ public class ResourceEventServiceIT {
 
     @Test
     @Sql(scripts = {"classpath:data/tearDown.sql",
-        "classpath:data/resourceEvent_setUp.sql", "classpath:data/resourceEvent_setUp_referral.sql"})
+        "classpath:data/resourceEventService_setUp.sql", "classpath:data/resourceEventService_setUp_referral.sql"})
     @Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
     public void getAndConsumeReferral_failureWhenConsumedOrNotPresent() {
         assertThatThrownBy(() -> resourceEventService.getAndConsumeReferral("consumedOrNotPresent"))
@@ -241,7 +241,7 @@ public class ResourceEventServiceIT {
 
     @Test
     @Sql(scripts = {"classpath:data/tearDown.sql",
-        "classpath:data/resourceEvent_setUp.sql", "classpath:data/resourceEvent_setUp_response.sql"})
+        "classpath:data/resourceEventService_setUp.sql", "classpath:data/resourceEventService_setUp_response.sql"})
     @Sql(scripts = {"classpath:data/tearDown.sql"}, executionPhase = AFTER_TEST_METHOD)
     public void createPostResponse_failureWhenAlreadyResponded() {
         Post post = (Post) resourceService.getById(3L);
