@@ -70,6 +70,12 @@ public class ResourceEventServiceIT {
     }
 
     @Test
+    public void getById_success() {
+        ResourceEvent resourceEvent = resourceEventService.getById(1L);
+        assertEquals(1L, resourceEvent.getId().longValue());
+    }
+
+    @Test
     public void createPostView_successWhenUser() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             LocalDateTime runTime = now().minusSeconds(1L);

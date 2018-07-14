@@ -1,6 +1,7 @@
 package hr.prism.board.service;
 
 import hr.prism.board.DbTestContext;
+import hr.prism.board.dao.PostResponseDAO;
 import hr.prism.board.domain.Post;
 import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.domain.User;
@@ -12,8 +13,10 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.inject.Inject;
+import java.util.List;
 
 import static hr.prism.board.enums.Action.EDIT;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
@@ -37,6 +40,12 @@ public class PostResponseServiceIT {
     @SpyBean
     private ActionService actionService;
 
+    @SpyBean
+    private ResourceEventService resourceEventService;
+
+    @SpyBean
+    private PostResponseDAO postResponseDAO;
+
     public void tearDown() {
         reset(actionService);
     }
@@ -51,6 +60,7 @@ public class PostResponseServiceIT {
 
         verify(actionService, times(1))
             .executeAction(eq(user), eq(post), eq(EDIT), any(Execution.class));
+        verify(resourceEventService, times(1)).getById(1L);
     }
 
     @Test
@@ -63,11 +73,47 @@ public class PostResponseServiceIT {
 
         verify(actionService, times(1))
             .executeAction(eq(user), eq(post), eq(EDIT), any(Execution.class));
+        verify(resourceEventService, times(1)).getById(1L);
+    }
+
+    @Test
+    public void getPostResponses_success() {
+        User user = userService.getById(1L);
+        Post post = (Post) resourceService.getById(3L);
+
+        List<ResourceEvent> responses =
+            postResponseService.getPostResponses(user, 3L, null);
+
+        ResourceEvent expectedResponse = new ResourceEvent();
+        expectedResponse.setId(1L);
+
+        assertThat(responses).containsExactly(expectedResponse);
+
+        verify(actionService, times(1))
+            .executeAction(eq(user), eq(post), eq(EDIT), any(Execution.class));
+
+        verify(postResponseDAO, times(1))
+            .getPostResponses(user, post, null);
     }
 
     @Test
     public void getPostResponses_successWhenAllTokensMatch() {
+        User user = userService.getById(1L);
+        Post post = (Post) resourceService.getById(3L);
 
+        List<ResourceEvent> responses =
+            postResponseService.getPostResponses(user, 3L, "undergraduate 19-24");
+
+        ResourceEvent expectedResponse = new ResourceEvent();
+        expectedResponse.setId(1L);
+
+        assertThat(responses).containsExactly(expectedResponse);
+
+        verify(actionService, times(1))
+            .executeAction(eq(user), eq(post), eq(EDIT), any(Execution.class));
+
+        verify(postResponseDAO, times(1))
+            .getPostResponses(user, post, "undergraduate 19-24");
     }
 
     @Test

@@ -85,9 +85,9 @@ public class PostResponseDAO {
             return emptyList();
         }
 
-        Map<Activity, ResourceEvent> activityEvents = resourceEvents
-            .stream()
-            .collect(toMap(ResourceEvent::getActivity, identity()));
+        Map<Activity, ResourceEvent> activityEvents =
+            resourceEvents.stream()
+                .collect(toMap(ResourceEvent::getActivity, identity()));
 
         List<ActivityEvent> views =
             activityEventRepository.findByActivitiesAndUserAndEvent(activityEvents.keySet(), user, VIEW);
