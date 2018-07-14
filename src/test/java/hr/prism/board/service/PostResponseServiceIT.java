@@ -145,7 +145,7 @@ public class PostResponseServiceIT {
         Post post = (Post) resourceService.getById(3L);
 
         List<ResourceEvent> responses =
-            postResponseService.getPostResponses(user, 3L, "19-24");
+            postResponseService.getPostResponses(user, 3L, "master 19-24");
 
         ResourceEvent expectedResponse = new ResourceEvent();
         expectedResponse.setId(1L);
@@ -157,7 +157,7 @@ public class PostResponseServiceIT {
             .executeAction(eq(user), eq(post), eq(EDIT), any(Execution.class));
 
         verify(postResponseDAO, times(1))
-            .getPostResponses(user, post, "19-24");
+            .getPostResponses(user, post, "master 19-24");
     }
 
     @Test

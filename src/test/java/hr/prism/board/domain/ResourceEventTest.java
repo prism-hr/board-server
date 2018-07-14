@@ -28,7 +28,7 @@ public class ResourceEventTest {
                 .setMemberYear(2018)
                 .setIndexData();
 
-        assertEquals("F540 19 24 L535 U533 K523 U536 S335 C513 S520 2018", resourceEvent.getIndexData());
+        assertEquals("F540 019 024 L535 U533 K523 U536 S335 C513 S520 2018", resourceEvent.getIndexData());
     }
 
     @Test

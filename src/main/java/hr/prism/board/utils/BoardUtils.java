@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.leftPad;
 
 public class BoardUtils {
 
@@ -151,7 +152,7 @@ public class BoardUtils {
     private static String makeSoundexToken(String string) {
         try {
             String soundexToken = SOUNDEX.encode(string);
-            return isEmpty(soundexToken) ? string : soundexToken;
+            return isEmpty(soundexToken) ? leftPad(string, 3, "0") : soundexToken;
         } catch (IllegalArgumentException e) {
             throw new Error("Could not encode string: " + string, e);
         }

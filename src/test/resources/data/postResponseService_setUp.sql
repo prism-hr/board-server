@@ -25,7 +25,7 @@ VALUES
 
 INSERT INTO resource_event (id, resource_id, event, user_id, index_data, created_timestamp)
 VALUES
-  (1, 3, 'RESPONSE', 1, 'F540 19 24 L535 U533 K523 U536 S335 C513 S520 2018', '2018-05-21 21:04:54.185');
+  (1, 3, 'RESPONSE', 1, 'F540 019 024 L535 U533 K523 U536 S335 C513 S520 2018', '2018-05-21 21:04:54.185');
 
 INSERT INTO activity (id, resource_id, resource_event_id, activity, filter_by_category, created_timestamp)
 VALUES
