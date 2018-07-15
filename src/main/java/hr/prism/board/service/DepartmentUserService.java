@@ -1,9 +1,6 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.Department;
-import hr.prism.board.domain.Resource;
-import hr.prism.board.domain.User;
-import hr.prism.board.domain.UserRole;
+import hr.prism.board.domain.*;
 import hr.prism.board.dto.MemberDTO;
 import hr.prism.board.dto.StaffDTO;
 import hr.prism.board.dto.UserDTO;
@@ -29,13 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.Activity.JOIN_DEPARTMENT_ACTIVITY;
@@ -47,7 +42,6 @@ import static hr.prism.board.enums.Role.*;
 import static hr.prism.board.enums.Scope.DEPARTMENT;
 import static hr.prism.board.enums.State.*;
 import static hr.prism.board.exception.ExceptionCode.*;
-import static hr.prism.board.utils.BoardUtils.getAcademicYearStart;
 import static java.time.LocalDateTime.now;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -115,7 +109,9 @@ public class DepartmentUserService {
         User userCreateUpdate = userService.createOrUpdateUser(
             userDTO, (email) -> userService.getByEmail(department, email, Role.MEMBER));
         UserRole userRole = userRoleService.createOrUpdateUserRole(department, userCreateUpdate, memberDTO, PENDING);
-        checkValidDemographicData(user, department);
+
+        DemographicDataStatus demographicDataStatus = makeDemographicDataStatus(user, department);
+        checkValidDemographicData(demographicDataStatus);
 
         eventProducer.produce(
             new ActivityEvent(this, id, UserRole.class, userRole.getId(),
@@ -169,7 +165,9 @@ public class DepartmentUserService {
         UserDTO userDTO = memberDTO.getUser();
         userService.updateUserMembership(user, userDTO);
         userRoleService.updateMembership(userRole, memberDTO);
-        checkValidDemographicData(user, department);
+
+        DemographicDataStatus demographicDataStatus = makeDemographicDataStatus(user, department);
+        checkValidDemographicData(demographicDataStatus);
         return user;
     }
 
@@ -257,39 +255,41 @@ public class DepartmentUserService {
     }
 
     DemographicDataStatus makeDemographicDataStatus(User user, Department department) {
-        DemographicDataStatus responseReadiness = new DemographicDataStatus();
-        if (user == null) {
-            return responseReadiness
-                .setRequireUserData(true)
-                .setRequireMemberData(true);
-        }
-
-        if (Stream.of(user.getGender(), user.getAgeRange(), user.getLocationNationality()).anyMatch(Objects::isNull)) {
-            // User data incomplete
-            responseReadiness.setRequireUserData(true);
-        }
-
-        List<UserRole> userRoles = userRoleService.getByResourceAndUser(department, user);
         UserRole memberRole =
-            userRoles.stream()
-                .filter(userRole -> userRole.getRole().equals(MEMBER))
+            user.getUserRoles().stream()
+                .filter(userRole ->
+                    userRole.getResource().equals(department)
+                        && userRole.getRole() == MEMBER
+                        && userRole.isActive())
                 .findFirst()
                 .orElse(null);
 
-        UserRole administratorRole =
-            userRoles.stream()
-                .filter(userRole -> userRole.getRole().equals(ADMINISTRATOR))
-                .findFirst()
-                .orElse(null);
-
-        if (memberRole != null) {
-            return addMemberRoleData(responseReadiness, department, memberRole);
-        } else if (administratorRole != null) {
-            return responseReadiness.setRole(ADMINISTRATOR);
+        if (memberRole == null) {
+            return new DemographicDataStatus()
+                .setRole(ADMINISTRATOR);
         }
 
-        // Member data complete and up to date
-        return responseReadiness;
+        return new DemographicDataStatus()
+            .setRole(MEMBER)
+            .setMemberCategory(memberRole.getMemberCategory())
+            .setMemberProgram(memberRole.getMemberProgram())
+            .setMemberYear(memberRole.getMemberYear())
+            .setExpiryDate(memberRole.getExpiryDate())
+            .setRequireUserData(user.isResponseDataIncomplete())
+            .setRequireMemberData(
+                !department.getMemberCategories().isEmpty()
+                    && memberRole.isResponseDataIncomplete());
+    }
+
+    void checkValidDemographicData(DemographicDataStatus demographicDataStatus) {
+        entityManager.flush();
+        if (demographicDataStatus.isRequireUserData()) {
+            throw new BoardForbiddenException(FORBIDDEN_REFERRAL, "User data not valid / complete");
+        }
+
+        if (demographicDataStatus.isRequireMemberData()) {
+            throw new BoardForbiddenException(FORBIDDEN_REFERRAL, "Member data not valid / complete");
+        }
     }
 
     private List<UserRole> createOrUpdateUserRoles(User user, Long id, User userCreateUpdate, UserRoleDTO userRoleDTO) {
@@ -370,18 +370,6 @@ public class DepartmentUserService {
         }
     }
 
-    private void checkValidDemographicData(User user, Department department) {
-        entityManager.flush();
-        DemographicDataStatus dataStatus = makeDemographicDataStatus(user, department);
-        if (dataStatus.isRequireUserData()) {
-            throw new BoardException(INVALID_MEMBERSHIP, "User data not valid / complete");
-        }
-
-        if (dataStatus.isRequireMemberData()) {
-            throw new BoardException(INVALID_MEMBERSHIP, "Member data not valid / complete");
-        }
-    }
-
     private List<UserRole> notifyStaffUserIfNew(User user, Long id, List<UserRole> userRoles) {
         Optional<UserRole> userRoleNotifyOptional =
             userRoles
@@ -411,39 +399,6 @@ public class DepartmentUserService {
         }
 
         return userRoles;
-    }
-
-    private DemographicDataStatus addMemberRoleData(DemographicDataStatus responseReadiness, Department department,
-                                                    UserRole memberRole) {
-        responseReadiness.setRole(MEMBER);
-        if (department.getMemberCategories().isEmpty()) {
-            // No member data required
-            return responseReadiness;
-        }
-
-        MemberCategory memberCategory = memberRole.getMemberCategory();
-        String memberProgram = memberRole.getMemberProgram();
-        Integer memberYear = memberRole.getMemberYear();
-        LocalDate expiryDate = memberRole.getExpiryDate();
-
-        responseReadiness
-            .setMemberCategory(memberCategory)
-            .setMemberProgram(memberProgram)
-            .setMemberYear(memberYear)
-            .setExpiryDate(expiryDate);
-
-        if (Stream.of(memberCategory, memberProgram, memberYear, expiryDate).anyMatch(Objects::isNull)) {
-            // Member data incomplete
-            return responseReadiness.setRequireMemberData(true);
-        }
-
-        LocalDate academicYearStart = getAcademicYearStart();
-        if (academicYearStart.isAfter(memberRole.getMemberDate())) {
-            // Member data out of date
-            return responseReadiness.setRequireMemberData(true);
-        }
-
-        return responseReadiness;
     }
 
 }

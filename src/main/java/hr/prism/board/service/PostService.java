@@ -3,7 +3,6 @@ package hr.prism.board.service;
 import com.google.common.collect.ImmutableList;
 import hr.prism.board.dao.PostDAO;
 import hr.prism.board.domain.*;
-import hr.prism.board.domain.ResourceEvent;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.PostDTO;
 import hr.prism.board.dto.PostPatchDTO;
@@ -15,7 +14,6 @@ import hr.prism.board.exception.BoardException;
 import hr.prism.board.repository.PostRepository;
 import hr.prism.board.representation.ChangeListRepresentation;
 import hr.prism.board.validation.PostValidator;
-import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.PostStatistics;
 import hr.prism.board.value.ResourceFilter;
 import hr.prism.board.value.ResourceFilter.ResourceFilterList;
@@ -25,11 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,8 +35,6 @@ import static hr.prism.board.enums.Activity.*;
 import static hr.prism.board.enums.CategoryType.MEMBER;
 import static hr.prism.board.enums.MemberCategory.toStrings;
 import static hr.prism.board.enums.Notification.*;
-import static hr.prism.board.enums.ResourceEvent.REFERRAL;
-import static hr.prism.board.enums.ResourceEvent.RESPONSE;
 import static hr.prism.board.enums.ResourceTask.POST_TASKS;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static hr.prism.board.enums.Role.AUTHOR;
@@ -52,13 +46,9 @@ import static hr.prism.board.utils.BoardUtils.isPresent;
 import static java.util.Collections.singletonList;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
-import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
-
-import hr.prism.board.event.ActivityEvent;
 
 @Service
 @Transactional
@@ -86,26 +76,19 @@ public class PostService {
 
     private final ResourceEventService resourceEventService;
 
-    private final PostResponseService postResponseService;
-
     private final ResourceTaskService resourceTaskService;
-
-    private final DepartmentUserService departmentUserService;
 
     private final PostValidator postValidator;
 
     private final EventProducer eventProducer;
-
-    private final EntityManager entityManager;
 
     @Inject
     public PostService(PostRepository postRepository, PostDAO postDAO, DocumentService documentService,
                        LocationService locationService, OrganizationService organizationService,
                        ResourceService resourceService, PostPatchService postPatchService,
                        UserRoleService userRoleService, UserService userService, ActionService actionService,
-                       ResourceEventService resourceEventService, PostResponseService postResponseService,
-                       ResourceTaskService resourceTaskService, DepartmentUserService departmentUserService,
-                       PostValidator postValidator, EventProducer eventProducer, EntityManager entityManager) {
+                       ResourceEventService resourceEventService, ResourceTaskService resourceTaskService,
+                       PostValidator postValidator, EventProducer eventProducer) {
         this.postRepository = postRepository;
         this.postDAO = postDAO;
         this.documentService = documentService;
@@ -117,12 +100,9 @@ public class PostService {
         this.userService = userService;
         this.actionService = actionService;
         this.resourceEventService = resourceEventService;
-        this.postResponseService = postResponseService;
         this.resourceTaskService = resourceTaskService;
-        this.departmentUserService = departmentUserService;
         this.postValidator = postValidator;
         this.eventProducer = eventProducer;
-        this.entityManager = entityManager;
     }
 
     public Post getById(User user, Long id) {
@@ -132,15 +112,7 @@ public class PostService {
     public Post getById(User user, Long id, String ipAddress, boolean recordView) {
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, VIEW, () -> post);
-
-        DemographicDataStatus responseReadiness =
-            departmentUserService.makeDemographicDataStatus(user, (Department) post.getParent().getParent());
-        if (recordView) {
-            resourceEventService.createPostView(post, user, ipAddress, responseReadiness);
-        }
-
-        postResponseService.addPostResponseReadiness(post, user, responseReadiness);
-        postResponseService.addPostResponse(post, user);
+        resourceEventService.processView(id, user, ipAddress, recordView);
         return post;
     }
 
@@ -158,7 +130,8 @@ public class PostService {
             return posts;
         }
 
-        addPostResponses(user, posts);
+        posts.forEach(post -> post.setExposeApplyData(actionService.canExecuteAction(post, EDIT)));
+        resourceEventService.processViews(posts, user);
         return posts;
     }
 
@@ -211,10 +184,7 @@ public class PostService {
         });
 
         postValidator.checkExistingRelation(createdPost);
-
-        DemographicDataStatus responseReadiness =
-            departmentUserService.makeDemographicDataStatus(user, (Department) createdPost.getParent().getParent());
-        postResponseService.addPostResponseReadiness(createdPost, user, responseReadiness);
+        resourceEventService.processView(createdPost.getId(), user, null, false);
         return createdPost;
     }
 
@@ -239,11 +209,7 @@ public class PostService {
                 }
             }
 
-            DemographicDataStatus responseReadiness =
-                departmentUserService.makeDemographicDataStatus(user, (Department) post.getParent().getParent());
-            postResponseService.addPostResponseReadiness(post, user, responseReadiness);
-
-            postResponseService.addPostResponse(post, user);
+            resourceEventService.processView(id, user, null, false);
             return post;
         });
     }
@@ -449,32 +415,6 @@ public class PostService {
                                 .setScope(DEPARTMENT)
                                 .setRole(Role.MEMBER)
                                 .setNotification(PUBLISH_POST_MEMBER_NOTIFICATION)))));
-        }
-    }
-
-    private void addPostResponses(User user, List<Post> posts) {
-        if (user != null) {
-            entityManager.flush();
-            Map<Post, Post> postIndex =
-                posts.stream()
-                    .collect(toMap(post -> post, post -> post));
-
-            Map<Resource, ResourceEvent> referrals =
-                resourceEventService.getResourceEvents(posts, REFERRAL, user)
-                    .stream()
-                    .collect(toMap(ResourceEvent::getResource, identity()));
-
-            Map<Resource, ResourceEvent> responses =
-                resourceEventService.getResourceEvents(posts, RESPONSE, user)
-                    .stream()
-                    .collect(toMap(ResourceEvent::getResource, identity()));
-
-            for (Map.Entry<Post, Post> postIndexEntry : postIndex.entrySet()) {
-                Post post = postIndexEntry.getValue();
-                post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
-                post.setReferral(referrals.get(post));
-                post.setResponse(responses.get(post));
-            }
         }
     }
 

@@ -24,7 +24,7 @@ import static java.util.stream.Collectors.toMap;
 
 @Repository
 @Transactional
-public class PostResponseDAO {
+public class ResourceEventDAO {
 
     private final UserRepository userRepository;
 
@@ -35,8 +35,8 @@ public class PostResponseDAO {
     private final EntityManager entityManager;
 
     @Inject
-    public PostResponseDAO(UserRepository userRepository, ResourceEventSearchRepository resourceEventSearchRepository,
-                           ActivityEventRepository activityEventRepository, EntityManager entityManager) {
+    public ResourceEventDAO(UserRepository userRepository, ResourceEventSearchRepository resourceEventSearchRepository,
+                            ActivityEventRepository activityEventRepository, EntityManager entityManager) {
         this.userRepository = userRepository;
         this.resourceEventSearchRepository = resourceEventSearchRepository;
         this.activityEventRepository = activityEventRepository;
@@ -44,8 +44,8 @@ public class PostResponseDAO {
     }
 
     @SuppressWarnings("JpaQlInspection")
-    public List<ResourceEvent> getPostResponses(User user, Post post, String searchTerm) {
-        List<Long> userIds = userRepository.findByResourceAndEvents(post, RESPONSE_EVENTS);
+    public List<ResourceEvent> getResponses(User user, Resource resource, String searchTerm) {
+        List<Long> userIds = userRepository.findByResourceAndEvents(resource, RESPONSE_EVENTS);
         if (userIds.isEmpty()) {
             return emptyList();
         }
@@ -62,7 +62,7 @@ public class PostResponseDAO {
             "select distinct resourceEvent " +
                 "from ResourceEvent resourceEvent " +
                 "left join resourceEvent.searches search on search.search = :search " +
-                "where resourceEvent.resource = :post " +
+                "where resourceEvent.resource = :resource " +
                 "and resourceEvent.user.id in (:userIds) " +
                 "and resourceEvent.event in (:events) ";
         if (searchTermApplied) {
@@ -72,7 +72,7 @@ public class PostResponseDAO {
         statement += "order by search.id, resourceEvent.id desc";
         List<ResourceEvent> resourceEvents = entityManager.createQuery(statement, ResourceEvent.class)
             .setParameter("search", search)
-            .setParameter("post", post)
+            .setParameter("resource", resource)
             .setParameter("userIds", userIds)
             .setParameter("events", RESPONSE_EVENTS)
             .getResultList();

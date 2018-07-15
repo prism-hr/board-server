@@ -41,7 +41,7 @@ public class DepartmentUserServiceIT {
     private PlatformTransactionManager platformTransactionManager;
 
     @Test
-    public void makeDemographicDataStatus_successWhenUserNul() {
+    public void makeDemographicDataStatus_successWhenUserNull() {
         new TransactionTemplate(platformTransactionManager).execute(status -> {
             Department department = (Department) resourceService.getById(1L);
 

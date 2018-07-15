@@ -8,7 +8,12 @@ import hr.prism.board.value.Statistics;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.stream.Stream;
 
+import static hr.prism.board.enums.State.ACCEPTED_STATES;
+import static hr.prism.board.utils.BoardUtils.getAcademicYearStart;
+import static java.time.LocalDate.now;
 import static javax.persistence.EnumType.STRING;
 
 @Entity
@@ -216,6 +221,19 @@ public class UserRole extends BoardEntity {
     public UserRole setCreated(boolean created) {
         this.created = created;
         return this;
+    }
+
+    public boolean isActive() {
+        return ACCEPTED_STATES.contains(state) && (expiryDate == null || expiryDate.isAfter(now()));
+    }
+
+    public boolean isResponseDataIncomplete() {
+        if (Stream.of(memberCategory, memberProgram, memberYear, expiryDate).anyMatch(Objects::isNull)) {
+            return true;
+        }
+
+        LocalDate academicYearStart = getAcademicYearStart();
+        return academicYearStart.isAfter(memberDate);
     }
 
 }

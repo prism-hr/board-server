@@ -428,6 +428,10 @@ public class User extends BoardEntity implements Comparable<User> {
         return this;
     }
 
+    public boolean isResponseDataIncomplete() {
+        return Stream.of(gender, ageRange, locationNationality).anyMatch(Objects::isNull);
+    }
+
     @Override
     public String toString() {
         return Joiner.on(" ").skipNulls().join(givenName, surname, email);

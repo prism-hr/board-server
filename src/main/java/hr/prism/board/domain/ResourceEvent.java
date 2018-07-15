@@ -3,6 +3,7 @@ package hr.prism.board.domain;
 import hr.prism.board.enums.AgeRange;
 import hr.prism.board.enums.Gender;
 import hr.prism.board.enums.MemberCategory;
+import hr.prism.board.enums.Role;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -13,7 +14,8 @@ import static hr.prism.board.utils.BoardUtils.makeSoundex;
 import static javax.persistence.EnumType.STRING;
 
 @Entity
-@Table(name = "resource_event")
+@Table(name = "resource_event",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"resource_id", "event", "user_id", "ip_address", "role"}))
 public class ResourceEvent extends BoardEntity {
 
     @ManyToOne
@@ -30,6 +32,10 @@ public class ResourceEvent extends BoardEntity {
 
     @Column(name = "ip_address")
     private String ipAddress;
+
+    @Enumerated(STRING)
+    @Column(name = "role")
+    private Role role;
 
     @Column(name = "referral", unique = true)
     private String referral;
@@ -115,6 +121,15 @@ public class ResourceEvent extends BoardEntity {
     @SuppressWarnings("UnusedReturnValue")
     public ResourceEvent setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
+        return this;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public ResourceEvent setRole(Role role) {
+        this.role = role;
         return this;
     }
 

@@ -16,6 +16,8 @@ public interface ResourceEventRepository extends JpaRepository<ResourceEvent, Lo
 
     ResourceEvent findByReferral(String referral);
 
+    ResourceEvent findByResourceAndUserAndReferral(Resource resource, User user, String referral);
+
     @Query(value =
         "select resourceEvent " +
             "from ResourceEvent resourceEvent " +
@@ -39,6 +41,7 @@ public interface ResourceEventRepository extends JpaRepository<ResourceEvent, Lo
             "from ResourceEvent resourceEvent " +
             "where resourceEvent.resource = :resource " +
             "and resourceEvent.user is not null " +
+            "and resourceEvent.role = 'MEMBER' " +
             "and resourceEvent.referral is null " +
             "group by resourceEvent.event")
     List<ResourceEventSummary> findUserSummaryByResource(@Param("resource") Resource resource);

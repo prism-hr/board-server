@@ -1,8 +1,10 @@
 package hr.prism.board.service;
 
+import hr.prism.board.dao.ResourceEventDAO;
 import hr.prism.board.domain.*;
 import hr.prism.board.dto.DocumentDTO;
 import hr.prism.board.dto.ResourceEventDTO;
+import hr.prism.board.enums.Role;
 import hr.prism.board.event.ActivityEvent;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.event.NotificationEvent;
@@ -13,7 +15,6 @@ import hr.prism.board.repository.ResourceEventRepository;
 import hr.prism.board.value.DemographicDataStatus;
 import hr.prism.board.value.ResourceEventSummary;
 import hr.prism.board.workflow.Notification;
-import hr.prism.board.workflow.Notification.Attachment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,8 @@ import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Map;
 
+import static hr.prism.board.enums.Action.EDIT;
+import static hr.prism.board.enums.Action.PURSUE;
 import static hr.prism.board.enums.Activity.RESPOND_POST_ACTIVITY;
 import static hr.prism.board.enums.Notification.RESPOND_POST_NOTIFICATION;
 import static hr.prism.board.enums.ResourceEvent.*;
@@ -32,6 +35,7 @@ import static hr.prism.board.exception.ExceptionCode.*;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
@@ -44,179 +48,276 @@ public class ResourceEventService {
 
     private final ResourceEventRepository resourceEventRepository;
 
+    private final ResourceEventDAO resourceEventDAO;
+
+    private final ActionService actionService;
+
     private final DocumentService documentService;
 
     private final UserService userService;
 
-    private final UserRoleService userRoleService;
+    private final ResourceService resourceService;
 
-    private final EntityManager entityManager;
+    private final ActivityService activityService;
+
+    private final DepartmentUserService departmentUserService;
 
     private final EventProducer eventProducer;
 
+    private final EntityManager entityManager;
+
     @Inject
-    public ResourceEventService(ResourceEventRepository resourceEventRepository, DocumentService documentService,
-                                UserService userService, UserRoleService userRoleService, EntityManager entityManager,
-                                EventProducer eventProducer) {
+    public ResourceEventService(ResourceEventRepository resourceEventRepository, ResourceEventDAO resourceEventDAO,
+                                ActionService actionService, DocumentService documentService, UserService userService,
+                                ResourceService resourceService, ActivityService activityService,
+                                DepartmentUserService departmentUserService, EventProducer eventProducer,
+                                EntityManager entityManager) {
         this.resourceEventRepository = resourceEventRepository;
+        this.resourceEventDAO = resourceEventDAO;
+        this.actionService = actionService;
         this.documentService = documentService;
         this.userService = userService;
-        this.userRoleService = userRoleService;
-        this.entityManager = entityManager;
+        this.resourceService = resourceService;
+        this.activityService = activityService;
+        this.departmentUserService = departmentUserService;
         this.eventProducer = eventProducer;
+        this.entityManager = entityManager;
     }
 
     public ResourceEvent getById(Long resourceEventId) {
         return resourceEventRepository.findOne(resourceEventId);
     }
 
-    @SuppressWarnings("UnusedReturnValue")
     @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)
-    public ResourceEvent createPostView(Post post, User user, String ipAddress,
-                                        DemographicDataStatus responseReadiness) {
+    public void processView(Long postId, User user, String ipAddress, boolean recordView) {
+        if (!recordView) return;
         if (user == null && ipAddress == null) {
             throw new BoardException(UNIDENTIFIABLE_RESOURCE_EVENT, "No way to identify post viewer");
         }
 
-        if (responseReadiness != null && responseReadiness.getRole() == ADMINISTRATOR) {
-            return null;
-        }
-
+        Post post = (Post) resourceService.getResource(user, POST, postId);
         ResourceEvent resourceEvent =
             new ResourceEvent()
                 .setResource(post)
+                .setUser(user)
+                .setIpAddress(ipAddress)
                 .setEvent(VIEW);
 
+        Role role = null;
         if (user == null) {
-            resourceEvent.setIpAddress(ipAddress);
             resourceEvent.setCreatorId(post.getCreatorId());
         } else {
-            resourceEvent.setUser(user);
+            if (actionService.canExecuteAction(post, PURSUE)) {
+                DemographicDataStatus demographicDataStatus = getDemographicDataStatus(user, post);
+                role = demographicDataStatus.getRole();
+
+                post.setDemographicDataStatus(demographicDataStatus);
+                if (demographicDataStatus.isReady() && post.getApplyEmail() == null) {
+                    createPostReferral(post, user);
+                }
+            }
+
+            entityManager.flush();
+            post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
+            post.setReferral(getResourceEvent(post, REFERRAL, user));
+            post.setResponse(getResourceEvent(post, RESPONSE, user));
         }
 
-        return saveResourceEvent(post, resourceEvent);
-    }
-
-    @SuppressWarnings("UnusedReturnValue")
-    @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)
-    public ResourceEvent createPostReferral(Post post, User user) {
-        String referral = sha256Hex(randomUUID().toString());
-        return saveResourceEvent(post,
-            new ResourceEvent()
-                .setResource(post)
-                .setEvent(REFERRAL)
-                .setUser(user)
-                .setReferral(referral));
+        resourceEventRepository.save(resourceEvent);
+        updateResourceEventSummary(post, role);
     }
 
     @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)
-    public ResourceEvent createPostResponse(Post post, User user, ResourceEventDTO resourceEventDTO) {
+    public String processReferral(Long postId, User user, String referral) {
+        Post post = (Post) resourceService.getResource(user, POST, postId);
+        actionService.executeAction(user, post, PURSUE, () -> post);
+
+        ResourceEvent resourceEvent = resourceEventRepository.findByResourceAndUserAndReferral(post, user, referral);
+        if (resourceEvent == null) {
+            throw new BoardForbiddenException(FORBIDDEN_REFERRAL,
+                "User: " + user + " cannot redeem referral: " + referral + " for post: " + post);
+        }
+
+        Document applyDocument = post.getApplyDocument();
+        String redirect = applyDocument == null ? post.getApplyWebsite() : applyDocument.getCloudinaryUrl();
+        if (redirect == null) {
+            throw new BoardException(INVALID_REFERRAL, "Post: " + post + " no longer accepting referrals");
+        }
+
+        DemographicDataStatus demographicDataStatus = getDemographicDataStatus(user, post);
+        departmentUserService.checkValidDemographicData(demographicDataStatus);
+
+        resourceEvent.setReferral(null);
+        Role role = demographicDataStatus.getRole();
+        if (role == MEMBER) {
+            resourceEvent.setGender(user.getGender());
+            resourceEvent.setAgeRange(user.getAgeRange());
+            resourceEvent.setLocationNationality(user.getLocationNationality());
+
+            resourceEvent.setMemberCategory(demographicDataStatus.getMemberCategory());
+            resourceEvent.setMemberProgram(demographicDataStatus.getMemberProgram());
+            resourceEvent.setMemberYear(demographicDataStatus.getMemberYear());
+
+            resourceEvent.setIndexData();
+            updateResourceEventSummary(post, role);
+        }
+
+        return redirect;
+    }
+
+    @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)
+    public ResourceEvent processResponse(Long postId, User user, ResourceEventDTO resourceEventDTO) {
+        Post post = (Post) resourceService.getResource(user, POST, postId);
+        actionService.executeAction(user, post, PURSUE, () -> post);
+
         if (post.getApplyEmail() == null) {
-            throw new BoardException(INVALID_RESOURCE_EVENT, "Post no longer accepting applications");
+            throw new BoardException(INVALID_RESPONSE, "Post: " + post + " no longer accepting responses");
         }
 
         ResourceEvent previousResponse = getResourceEvent(post, RESPONSE, user);
         if (previousResponse != null) {
             throw new BoardDuplicateException(
-                DUPLICATE_RESOURCE_EVENT, "User already responded", previousResponse.getId());
+                DUPLICATE_RESPONSE, "User already responded to post: " + post, previousResponse.getId());
         }
 
+        DemographicDataStatus demographicDataStatus = getDemographicDataStatus(user, post);
+        departmentUserService.checkValidDemographicData(demographicDataStatus);
+
         DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
-        String websiteResume = resourceEventDTO.getWebsiteResume();
-        String coveringNote = resourceEventDTO.getCoveringNote();
-
         Document documentResume = documentService.getOrCreateDocument(documentResumeDTO);
-        UserRole userRole = userRoleService.getByResourceUserAndRole(post.getParent().getParent(), user, MEMBER);
+        String websiteResume = resourceEventDTO.getWebsiteResume();
 
-        ResourceEvent response = saveResourceEvent(post,
-            new ResourceEvent()
-                .setResource(post)
-                .setEvent(RESPONSE)
-                .setUser(user)
+        ResourceEvent resourceEvent =
+            resourceEventRepository.save(
+                new ResourceEvent()
+                    .setResource(post)
+                    .setEvent(RESPONSE)
+                    .setUser(user)
+                    .setDocumentResume(documentResume)
+                    .setWebsiteResume(websiteResume)
+                    .setCoveringNote(resourceEventDTO.getCoveringNote()));
+
+        Role role = demographicDataStatus.getRole();
+        resourceEvent.setRole(role);
+
+        if (role == MEMBER) {
+            resourceEvent
                 .setGender(user.getGender())
                 .setAgeRange(user.getAgeRange())
                 .setLocationNationality(user.getLocationNationality())
-                .setMemberCategory(userRole.getMemberCategory())
-                .setMemberProgram(userRole.getMemberProgram())
-                .setMemberYear(userRole.getMemberYear())
-                .setDocumentResume(documentResume)
-                .setWebsiteResume(websiteResume)
-                .setCoveringNote(coveringNote)
-                .setIndexData());
+                .setMemberCategory(demographicDataStatus.getMemberCategory())
+                .setMemberProgram(demographicDataStatus.getMemberProgram())
+                .setMemberYear(demographicDataStatus.getMemberYear())
+                .setIndexData();
+
+            updateResourceEventSummary(post, role);
+
+            Long responseId = resourceEvent.getId();
+            eventProducer.produce(
+                new ActivityEvent(this, postId, ResourceEvent.class, responseId,
+                    singletonList(
+                        new hr.prism.board.workflow.Activity()
+                            .setScope(POST)
+                            .setRole(ADMINISTRATOR)
+                            .setActivity(RESPOND_POST_ACTIVITY))),
+                new NotificationEvent(this, postId, responseId,
+                    singletonList(
+                        new Notification()
+                            .setNotification(RESPOND_POST_NOTIFICATION)
+                            .addAttachment(
+                                new Notification.Attachment()
+                                    .setName(documentResume.getFileName())
+                                    .setUrl(documentResume.getCloudinaryUrl())
+                                    .setLabel("Application")))));
+        }
 
         if (isTrue(resourceEventDTO.getDefaultResume())) {
             userService.updateUserResume(user, documentResume, websiteResume);
         }
 
-        Long postId = post.getId();
-        Long responseId = response.getId();
-
-        eventProducer.produce(
-            new ActivityEvent(this, postId, ResourceEvent.class, responseId,
-                singletonList(
-                    new hr.prism.board.workflow.Activity()
-                        .setScope(POST)
-                        .setRole(ADMINISTRATOR)
-                        .setActivity(RESPOND_POST_ACTIVITY))),
-            new NotificationEvent(this, postId, responseId,
-                singletonList(
-                    new Notification()
-                        .setNotification(RESPOND_POST_NOTIFICATION)
-                        .addAttachment(
-                            new Attachment()
-                                .setName(documentResume.getFileName())
-                                .setUrl(documentResume.getCloudinaryUrl())
-                                .setLabel("Application")))));
-
-        return response;
+        resourceEvent.setExposeResponseData(true);
+        return resourceEvent;
     }
 
-    ResourceEvent getResourceEvent(Resource resource, hr.prism.board.enums.ResourceEvent event,
-                                   User user) {
+    public ResourceEvent getResponse(User user, Long resourceId, Long resourceEventId) {
+        Post post = (Post) resourceService.getResource(user, POST, resourceId);
+        actionService.executeAction(user, post, EDIT, () -> post);
+        ResourceEvent resourceEvent = getById(resourceEventId);
+        resourceEvent.setExposeResponseData(resourceEvent.getUser().equals(user));
+        return resourceEvent;
+    }
+
+    public List<ResourceEvent> getResponses(User user, Long resourceId, String searchTerm) {
+        Post post = (Post) resourceService.getResource(user, POST, resourceId);
+        actionService.executeAction(user, post, EDIT, () -> post);
+        return resourceEventDAO.getResponses(user, post, searchTerm);
+    }
+
+    public ResourceEvent createResponseView(User user, Long postId, Long responseId) {
+        ResourceEvent resourceEvent = getResponse(user, postId, responseId);
+        activityService.viewActivity(resourceEvent.getActivity(), user);
+        return resourceEvent.setViewed(true);
+    }
+
+    void processViews(List<Post> posts, User user) {
+        if (user == null) {
+            return;
+        }
+
+        entityManager.flush();
+        Map<Post, Post> postIndex =
+            posts.stream()
+                .collect(toMap(post -> post, post -> post));
+
+        Map<Resource, ResourceEvent> referrals =
+            getResourceEvents(posts, REFERRAL, user).stream()
+                .collect(toMap(ResourceEvent::getResource, identity()));
+
+        Map<Resource, ResourceEvent> responses =
+            getResourceEvents(posts, RESPONSE, user).stream()
+                .collect(toMap(ResourceEvent::getResource, identity()));
+
+        for (Map.Entry<Post, Post> postIndexEntry : postIndex.entrySet()) {
+            Post post = postIndexEntry.getValue();
+            post.setReferral(referrals.get(post));
+            post.setResponse(responses.get(post));
+        }
+    }
+
+    private ResourceEvent getResourceEvent(Resource resource, hr.prism.board.enums.ResourceEvent event, User user) {
         List<Long> ids =
             resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(singletonList(resource), event, user);
         return ids.isEmpty() ? null : resourceEventRepository.findOne(ids.get(0));
     }
 
-    <T extends Resource> List<ResourceEvent> getResourceEvents(
+    private <T extends Resource> List<ResourceEvent> getResourceEvents(
         List<T> resources, hr.prism.board.enums.ResourceEvent event, User user) {
         List<Long> ids = resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(resources, event, user);
         return ids.isEmpty() ? emptyList() : resourceEventRepository.findOnes(ids);
     }
 
-    ResourceEvent getAndConsumeReferral(String referral) {
-        ResourceEvent resourceEvent = resourceEventRepository.findByReferral(referral);
-        if (resourceEvent == null) {
-            throw new BoardForbiddenException(FORBIDDEN_REFERRAL,
-                "Referral: " + referral + " does not exist or has been consumed");
+    private void createPostReferral(Post post, User user) {
+        String referral = sha256Hex(randomUUID().toString());
+        DemographicDataStatus demographicDataStatus = getDemographicDataStatus(user, post);
+        resourceEventRepository.save(
+            new ResourceEvent()
+                .setResource(post)
+                .setEvent(REFERRAL)
+                .setUser(user)
+                .setRole(demographicDataStatus.getRole())
+                .setReferral(referral));
+    }
+
+    private DemographicDataStatus getDemographicDataStatus(User user, Post post) {
+        Department department = (Department) post.getParent().getParent();
+        return departmentUserService.makeDemographicDataStatus(user, department);
+    }
+
+    private void updateResourceEventSummary(Post post, Role role) {
+        if (role == ADMINISTRATOR) {
+            return;
         }
 
-        User user = resourceEvent.getUser();
-        resourceEvent.setGender(user.getGender());
-        resourceEvent.setAgeRange(user.getAgeRange());
-        resourceEvent.setLocationNationality(user.getLocationNationality());
-
-        Department department = (Department) resourceEvent.getResource().getParent().getParent();
-        UserRole userRole = userRoleService.getByResourceUserAndRole(department, user, MEMBER);
-
-        resourceEvent.setMemberCategory(userRole.getMemberCategory());
-        resourceEvent.setMemberProgram(userRole.getMemberProgram());
-        resourceEvent.setMemberYear(userRole.getMemberYear());
-
-        resourceEvent.setIndexData();
-        resourceEvent.setReferral(null);
-
-        updateResourceEventSummary((Post) resourceEvent.getResource());
-        return resourceEvent;
-    }
-
-    private ResourceEvent saveResourceEvent(Post post, ResourceEvent resourceEvent) {
-        resourceEvent = resourceEventRepository.save(resourceEvent);
-        updateResourceEventSummary(post);
-        return resourceEvent;
-    }
-
-    private void updateResourceEventSummary(Post post) {
         entityManager.flush();
         Map<hr.prism.board.enums.ResourceEvent, ResourceEventSummary> summaries =
             resourceEventRepository.findUserSummaryByResource(post).stream()
@@ -248,7 +349,7 @@ public class ResourceEventService {
                     post.setLastResponseTimestamp(summary.getLastTimestamp());
                     break;
                 default:
-                    throw new IllegalStateException("Unexpected event type: " + summaryKey);
+                    throw new IllegalStateException("Unsupported event type: " + summaryKey);
             }
         }
     }
