@@ -1,6 +1,9 @@
 package hr.prism.board.service;
 
-import hr.prism.board.domain.*;
+import hr.prism.board.domain.Department;
+import hr.prism.board.domain.Resource;
+import hr.prism.board.domain.User;
+import hr.prism.board.domain.UserRole;
 import hr.prism.board.dto.MemberDTO;
 import hr.prism.board.dto.StaffDTO;
 import hr.prism.board.dto.UserDTO;
@@ -25,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,19 +62,16 @@ public class DepartmentUserService {
 
     private final UserRoleService userRoleService;
 
-    private final ActivityService activityService;
-
     private final ResourceTaskService resourceTaskService;
+
+    private final ActivityService activityService;
 
     private final EventProducer eventProducer;
 
-    private final EntityManager entityManager;
-
     @Inject
-    public DepartmentUserService(UserService userService, ResourceService resourceService,
-                                 ActionService actionService, UserRoleService userRoleService,
-                                 ResourceTaskService resourceTaskService, ActivityService activityService,
-                                 EventProducer eventProducer, EntityManager entityManager) {
+    public DepartmentUserService(UserService userService, ResourceService resourceService, ActionService actionService,
+                                 UserRoleService userRoleService, ResourceTaskService resourceTaskService,
+                                 ActivityService activityService, EventProducer eventProducer) {
         this.userService = userService;
         this.resourceService = resourceService;
         this.actionService = actionService;
@@ -80,7 +79,6 @@ public class DepartmentUserService {
         this.activityService = activityService;
         this.resourceTaskService = resourceTaskService;
         this.eventProducer = eventProducer;
-        this.entityManager = entityManager;
     }
 
     public List<UserSearch> findUsers(User user, Long id, String searchTerm) {
@@ -257,16 +255,19 @@ public class DepartmentUserService {
     DemographicDataStatus makeDemographicDataStatus(User user, Department department) {
         UserRole memberRole =
             user.getUserRoles().stream()
-                .filter(userRole ->
-                    userRole.getResource().equals(department)
-                        && userRole.getRole() == MEMBER
-                        && userRole.isActive())
+                .filter(userRole -> userRole.isActiveResourceRole(department, MEMBER))
                 .findFirst()
                 .orElse(null);
 
         if (memberRole == null) {
             return new DemographicDataStatus()
                 .setRole(ADMINISTRATOR);
+        }
+
+        if (department.getMemberCategories().isEmpty()) {
+            return new DemographicDataStatus()
+                .setRole(MEMBER)
+                .setRequireUserData(user.isResponseDataIncomplete());
         }
 
         return new DemographicDataStatus()
@@ -276,13 +277,10 @@ public class DepartmentUserService {
             .setMemberYear(memberRole.getMemberYear())
             .setExpiryDate(memberRole.getExpiryDate())
             .setRequireUserData(user.isResponseDataIncomplete())
-            .setRequireMemberData(
-                !department.getMemberCategories().isEmpty()
-                    && memberRole.isResponseDataIncomplete());
+            .setRequireMemberData(memberRole.isResponseDataIncomplete());
     }
 
     void checkValidDemographicData(DemographicDataStatus demographicDataStatus) {
-        entityManager.flush();
         if (demographicDataStatus.isRequireUserData()) {
             throw new BoardForbiddenException(FORBIDDEN_REFERRAL, "User data not valid / complete");
         }

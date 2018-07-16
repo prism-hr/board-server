@@ -186,6 +186,7 @@ public class ResourceEventService {
         DocumentDTO documentResumeDTO = resourceEventDTO.getDocumentResume();
         Document documentResume = documentService.getOrCreateDocument(documentResumeDTO);
         String websiteResume = resourceEventDTO.getWebsiteResume();
+        String coveringNote = resourceEventDTO.getCoveringNote();
 
         ResourceEvent resourceEvent =
             resourceEventRepository.save(
@@ -195,7 +196,7 @@ public class ResourceEventService {
                     .setUser(user)
                     .setDocumentResume(documentResume)
                     .setWebsiteResume(websiteResume)
-                    .setCoveringNote(resourceEventDTO.getCoveringNote()));
+                    .setCoveringNote(coveringNote));
 
         Role role = demographicDataStatus.getRole();
         resourceEvent.setRole(role);
@@ -211,24 +212,7 @@ public class ResourceEventService {
                 .setIndexData();
 
             updateResourceEventSummary(post, role);
-
-            Long responseId = resourceEvent.getId();
-            eventProducer.produce(
-                new ActivityEvent(this, postId, ResourceEvent.class, responseId,
-                    singletonList(
-                        new hr.prism.board.workflow.Activity()
-                            .setScope(POST)
-                            .setRole(ADMINISTRATOR)
-                            .setActivity(RESPOND_POST_ACTIVITY))),
-                new NotificationEvent(this, postId, responseId,
-                    singletonList(
-                        new Notification()
-                            .setNotification(RESPOND_POST_NOTIFICATION)
-                            .addAttachment(
-                                new Notification.Attachment()
-                                    .setName(documentResume.getFileName())
-                                    .setUrl(documentResume.getCloudinaryUrl())
-                                    .setLabel("Application")))));
+            sendResponseNotifications(resourceEvent);
         }
 
         if (isTrue(resourceEventDTO.getDefaultResume())) {
@@ -352,6 +336,29 @@ public class ResourceEventService {
                     throw new IllegalStateException("Unsupported event type: " + summaryKey);
             }
         }
+    }
+
+    private void sendResponseNotifications(ResourceEvent resourceEvent) {
+        Long responseId = resourceEvent.getId();
+        Long postId = resourceEvent.getResource().getId();
+        Document documentResume = resourceEvent.getDocumentResume();
+
+        eventProducer.produce(
+            new ActivityEvent(this, postId, ResourceEvent.class, responseId,
+                singletonList(
+                    new hr.prism.board.workflow.Activity()
+                        .setScope(POST)
+                        .setRole(ADMINISTRATOR)
+                        .setActivity(RESPOND_POST_ACTIVITY))),
+            new NotificationEvent(this, postId, responseId,
+                singletonList(
+                    new Notification()
+                        .setNotification(RESPOND_POST_NOTIFICATION)
+                        .addAttachment(
+                            new Notification.Attachment()
+                                .setName(documentResume.getFileName())
+                                .setUrl(documentResume.getCloudinaryUrl())
+                                .setLabel("Application")))));
     }
 
 }

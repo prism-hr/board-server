@@ -9,7 +9,7 @@ UPDATE resource_event INNER JOIN user_role
   ON resource_event.resource_id = user_role.resource_id
   AND resource_event.user_id = user_role.user_id
   AND user_role.role = 'MEMBER'
-SET role = 'MEMBER';
+SET resource_event.role = 'MEMBER';
 
 UPDATE resource_event
 SET role = 'ADMINISTRATOR'

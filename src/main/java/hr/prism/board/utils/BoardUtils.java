@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import static java.time.LocalDate.now;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -138,8 +139,8 @@ public class BoardUtils {
         return isEmpty(objects) ? null : objects.get(0);
     }
 
-    public static LocalDate getAcademicYearStart() {
-        LocalDate baseline = LocalDate.now();
+    public static LocalDate makeAcademicYearStart() {
+        LocalDate baseline = now();
         if (baseline.getMonthValue() > 9) {
             // Academic year started this year
             return LocalDate.of(baseline.getYear(), 10, 1);

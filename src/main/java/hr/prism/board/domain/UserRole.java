@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import static hr.prism.board.enums.State.ACCEPTED_STATES;
-import static hr.prism.board.utils.BoardUtils.getAcademicYearStart;
+import static hr.prism.board.utils.BoardUtils.makeAcademicYearStart;
 import static java.time.LocalDate.now;
 import static javax.persistence.EnumType.STRING;
 
@@ -223,8 +223,11 @@ public class UserRole extends BoardEntity {
         return this;
     }
 
-    public boolean isActive() {
-        return ACCEPTED_STATES.contains(state) && (expiryDate == null || expiryDate.isAfter(now()));
+    public boolean isActiveResourceRole(Resource resource, Role role) {
+        return Objects.equals(this.resource, resource)
+            && this.role == role
+            && ACCEPTED_STATES.contains(state)
+            && (expiryDate == null || expiryDate.isAfter(now()));
     }
 
     public boolean isResponseDataIncomplete() {
@@ -232,7 +235,7 @@ public class UserRole extends BoardEntity {
             return true;
         }
 
-        LocalDate academicYearStart = getAcademicYearStart();
+        LocalDate academicYearStart = makeAcademicYearStart();
         return academicYearStart.isAfter(memberDate);
     }
 

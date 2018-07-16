@@ -368,6 +368,11 @@ public class User extends BoardEntity implements Comparable<User> {
         return userRoles;
     }
 
+    public User setUserRoles(Set<UserRole> userRoles) {
+        this.userRoles = userRoles;
+        return this;
+    }
+
     @SuppressWarnings("unused")
     public Set<UserSearch> getSearches() {
         return searches;

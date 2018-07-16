@@ -6,8 +6,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.time.LocalDate;
+
 import static hr.prism.board.enums.MemberCategory.UNDERGRADUATE_STUDENT;
+import static hr.prism.board.utils.BoardUtils.makeAcademicYearStart;
 import static hr.prism.board.utils.BoardUtils.makeSoundex;
+import static java.time.LocalDate.now;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -33,6 +38,15 @@ public class BoardUtilsTest {
                 2018));
 
         assertEquals("W630 P620 C535 W630 U536 S335 L535 U533 K523 2018", soundex);
+    }
+
+    @Test
+    public void makeAcademicYearStart_success() {
+        LocalDate academicYearStart = makeAcademicYearStart();
+
+        assertThat(academicYearStart).isLessThanOrEqualTo(now());
+        assertEquals(10, academicYearStart.getMonthValue());
+        assertEquals(1, academicYearStart.getDayOfMonth());
     }
 
 }
