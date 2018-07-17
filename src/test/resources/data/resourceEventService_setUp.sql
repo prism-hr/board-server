@@ -30,6 +30,6 @@ INSERT INTO user_role (id, uuid, resource_id, user_id, role, state, member_categ
 VALUES
   (1, UUID(), 1, 1, 'MEMBER', 'ACCEPTED', 'UNDERGRADUATE_STUDENT', 'memberProgram', 2018, '2018-05-21 21:04:54.185');
 
-INSERT INTO resource_event (id, resource_id, event, user_id, referral, created_timestamp)
+INSERT INTO resource_event (id, resource_id, event, user_id, role, referral, created_timestamp)
 VALUES
-  (1, 3, 'REFERRAL', 1, 'referral', '2018-05-21 21:04:54.185');
+  (1, 4, 'REFERRAL', 1, 'MEMBER', 'referral', '2018-05-21 21:04:54.185');

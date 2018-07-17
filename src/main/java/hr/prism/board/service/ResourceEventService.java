@@ -22,6 +22,8 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static hr.prism.board.enums.Action.EDIT;
 import static hr.prism.board.enums.Action.PURSUE;
@@ -34,6 +36,7 @@ import static hr.prism.board.enums.Scope.POST;
 import static hr.prism.board.exception.ExceptionCode.*;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.Optional.ofNullable;
 import static java.util.UUID.randomUUID;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
@@ -89,13 +92,14 @@ public class ResourceEventService {
     }
 
     @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)
-    public void processView(Long postId, User user, String ipAddress, boolean recordView) {
-        if (!recordView) return;
+    public Post processView(Long postId, User user, String ipAddress, boolean recordView) {
+        Post post = (Post) resourceService.getResource(user, POST, postId);
+        if (!recordView) return post;
+
         if (user == null && ipAddress == null) {
             throw new BoardException(UNIDENTIFIABLE_RESOURCE_EVENT, "No way to identify post viewer");
         }
 
-        Post post = (Post) resourceService.getResource(user, POST, postId);
         ResourceEvent resourceEvent =
             new ResourceEvent()
                 .setResource(post)
@@ -106,9 +110,15 @@ public class ResourceEventService {
         Role role = null;
         if (user == null) {
             resourceEvent.setCreatorId(post.getCreatorId());
+            resourceEventRepository.save(resourceEvent);
         } else {
+            DemographicDataStatus demographicDataStatus = getDemographicDataStatus(user, post);
+            post.setDemographicDataStatus(demographicDataStatus);
+
+            resourceEvent.setRole(demographicDataStatus.getRole());
+            resourceEventRepository.save(resourceEvent);
+
             if (actionService.canExecuteAction(post, PURSUE)) {
-                DemographicDataStatus demographicDataStatus = getDemographicDataStatus(user, post);
                 role = demographicDataStatus.getRole();
 
                 post.setDemographicDataStatus(demographicDataStatus);
@@ -118,13 +128,12 @@ public class ResourceEventService {
             }
 
             entityManager.flush();
-            post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
             post.setReferral(getResourceEvent(post, REFERRAL, user));
             post.setResponse(getResourceEvent(post, RESPONSE, user));
         }
 
-        resourceEventRepository.save(resourceEvent);
-        updateResourceEventSummary(post, role);
+        updateResourceEventSummaries(post, role);
+        return post;
     }
 
     @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)
@@ -159,7 +168,7 @@ public class ResourceEventService {
             resourceEvent.setMemberYear(demographicDataStatus.getMemberYear());
 
             resourceEvent.setIndexData();
-            updateResourceEventSummary(post, role);
+            updateResourceEventSummaries(post, role);
         }
 
         return redirect;
@@ -211,7 +220,7 @@ public class ResourceEventService {
                 .setMemberYear(demographicDataStatus.getMemberYear())
                 .setIndexData();
 
-            updateResourceEventSummary(post, role);
+            updateResourceEventSummaries(post, role);
             sendResponseNotifications(resourceEvent);
         }
 
@@ -244,9 +253,7 @@ public class ResourceEventService {
     }
 
     void processViews(List<Post> posts, User user) {
-        if (user == null) {
-            return;
-        }
+        if (user == null) return;
 
         entityManager.flush();
         Map<Post, Post> postIndex =
@@ -271,13 +278,21 @@ public class ResourceEventService {
     private ResourceEvent getResourceEvent(Resource resource, hr.prism.board.enums.ResourceEvent event, User user) {
         List<Long> ids =
             resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(singletonList(resource), event, user);
-        return ids.isEmpty() ? null : resourceEventRepository.findOne(ids.get(0));
+
+        if (ids.isEmpty()) return null;
+        return ofNullable(resourceEventRepository.findOne(ids.get(0)))
+            .map(resourceEvent -> resourceEvent.setExposeResponseData(Objects.equals(user, resourceEvent.getUser())))
+            .orElse(null);
     }
 
     private <T extends Resource> List<ResourceEvent> getResourceEvents(
         List<T> resources, hr.prism.board.enums.ResourceEvent event, User user) {
         List<Long> ids = resourceEventRepository.findMaxIdsByResourcesAndEventAndUser(resources, event, user);
-        return ids.isEmpty() ? emptyList() : resourceEventRepository.findOnes(ids);
+
+        if (ids.isEmpty()) return emptyList();
+        return resourceEventRepository.findOnes(ids).stream()
+            .map(resourceEvent -> resourceEvent.setExposeResponseData(Objects.equals(user, resourceEvent.getUser())))
+            .collect(Collectors.toList());
     }
 
     private void createPostReferral(Post post, User user) {
@@ -297,26 +312,10 @@ public class ResourceEventService {
         return departmentUserService.makeDemographicDataStatus(user, department);
     }
 
-    private void updateResourceEventSummary(Post post, Role role) {
-        if (role == ADMINISTRATOR) {
-            return;
-        }
+    private void updateResourceEventSummaries(Post post, Role role) {
+        if (role == ADMINISTRATOR) return;
 
-        entityManager.flush();
-        Map<hr.prism.board.enums.ResourceEvent, ResourceEventSummary> summaries =
-            resourceEventRepository.findUserSummaryByResource(post).stream()
-                .collect(toMap(ResourceEventSummary::getKey, resourceEventSummary -> resourceEventSummary));
-
-        resourceEventRepository.findIpAddressSummaryByResource(post).forEach(summary -> {
-            hr.prism.board.enums.ResourceEvent key = summary.getKey();
-            ResourceEventSummary value = summaries.get(summary.getKey());
-            if (value == null) {
-                summaries.put(key, summary);
-            } else {
-                value.merge(summary);
-            }
-        });
-
+        Map<hr.prism.board.enums.ResourceEvent, ResourceEventSummary> summaries = getResourceEventSummaries(post);
         for (ResourceEventSummary summary : summaries.values()) {
             hr.prism.board.enums.ResourceEvent summaryKey = summary.getKey();
             switch (summaryKey) {
@@ -336,6 +335,24 @@ public class ResourceEventService {
                     throw new IllegalStateException("Unsupported event type: " + summaryKey);
             }
         }
+    }
+
+    private Map<hr.prism.board.enums.ResourceEvent, ResourceEventSummary> getResourceEventSummaries(Post post) {
+        entityManager.flush();
+        Map<hr.prism.board.enums.ResourceEvent, ResourceEventSummary> summaries =
+            resourceEventRepository.findUserSummaryByResource(post).stream()
+                .collect(toMap(ResourceEventSummary::getKey, resourceEventSummary -> resourceEventSummary));
+
+        resourceEventRepository.findIpAddressSummaryByResource(post).forEach(summary -> {
+            hr.prism.board.enums.ResourceEvent key = summary.getKey();
+            ResourceEventSummary value = summaries.get(summary.getKey());
+            if (value == null) {
+                summaries.put(key, summary);
+            } else {
+                value.merge(summary);
+            }
+        });
+        return summaries;
     }
 
     private void sendResponseNotifications(ResourceEvent resourceEvent) {

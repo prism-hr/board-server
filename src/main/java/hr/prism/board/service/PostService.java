@@ -112,8 +112,8 @@ public class PostService {
     public Post getById(User user, Long id, String ipAddress, boolean recordView) {
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, VIEW, () -> post);
-        resourceEventService.processView(id, user, ipAddress, recordView);
-        return post;
+        post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
+        return resourceEventService.processView(id, user, ipAddress, recordView);
     }
 
     public List<Post> getPosts(User user, ResourceFilter filter) {
@@ -184,8 +184,8 @@ public class PostService {
         });
 
         postValidator.checkExistingRelation(createdPost);
-        resourceEventService.processView(createdPost.getId(), user, null, false);
-        return createdPost;
+        createdPost.setExposeApplyData(actionService.canExecuteAction(createdPost, EDIT));
+        return resourceEventService.processView(createdPost.getId(), user, null, false);
     }
 
     public Post executeAction(User user, Long id, Action action, PostPatchDTO postDTO) {
@@ -209,8 +209,8 @@ public class PostService {
                 }
             }
 
-            resourceEventService.processView(id, user, null, false);
-            return post;
+            post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
+            return resourceEventService.processView(id, user, null, false);
         });
     }
 

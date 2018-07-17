@@ -152,6 +152,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "from ResourceEvent resourceEvent " +
             "where resourceEvent.resource = :resource " +
             "and resourceEvent.event in (:events) " +
+            "and resourceEvent.role = 'MEMBER' " +
             "and resourceEvent.referral is null " +
             "group by resourceEvent.resource, resourceEvent.user " +
             "order by resourceEvent.id desc")
