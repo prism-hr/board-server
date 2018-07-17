@@ -8,7 +8,6 @@ import hr.prism.board.domain.User;
 import hr.prism.board.enums.Role;
 import hr.prism.board.event.EventProducer;
 import hr.prism.board.repository.ResourceEventRepository;
-import org.apache.commons.lang3.ObjectUtils;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,6 +23,7 @@ import static hr.prism.board.enums.ResourceEvent.REFERRAL;
 import static hr.prism.board.enums.ResourceEvent.VIEW;
 import static hr.prism.board.enums.Role.ADMINISTRATOR;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.ObjectUtils.compare;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.reset;
@@ -81,7 +81,7 @@ public class ResourceEventServiceIT {
 
         List<ResourceEvent> resourceEvents =
             resourceEventRepository.findAll().stream()
-                .sorted((event1, event2) -> ObjectUtils.compare(event1.getId(), event2.getId()))
+                .sorted((event1, event2) -> compare(event1.getId(), event2.getId()))
                 .collect(toList());
 
         assertThat(resourceEvents).hasSize(2);
