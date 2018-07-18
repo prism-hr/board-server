@@ -27,6 +27,7 @@ import static hr.prism.board.enums.State.ACCEPTED;
 import static hr.prism.board.exception.ExceptionCode.IRREMOVABLE_USER;
 import static hr.prism.board.exception.ExceptionCode.IRREMOVABLE_USER_ROLE;
 import static hr.prism.board.utils.BoardUtils.emptyToNull;
+import static java.time.LocalDate.now;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 
@@ -127,7 +128,7 @@ public class UserRoleService {
         }
 
         if (updated) {
-            userRole.setMemberDate(LocalDate.now());
+            userRole.setMemberDate(now());
         }
 
         return userRole;
@@ -189,7 +190,7 @@ public class UserRoleService {
                 .setMemberCategory(memberDTO.getMemberCategory())
                 .setMemberProgram(memberDTO.getMemberProgram())
                 .setMemberYear(memberDTO.getMemberYear())
-                .setMemberDate(LocalDate.now())
+                .setMemberDate(now())
                 .setState(state)
                 .setExpiryDate(memberDTO.getExpiryDate());
 

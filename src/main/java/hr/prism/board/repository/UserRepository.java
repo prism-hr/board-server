@@ -25,8 +25,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(value = "user.extended", type = FETCH)
     User findOne(@Param("id") Long id);
 
+    @EntityGraph(value = "user.extended", type = FETCH)
     User findByUuid(String uuid);
 
+    @EntityGraph(value = "user.extended", type = FETCH)
     User findByEmail(String email);
 
     @Query(value =
@@ -39,6 +41,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "where userRole.resource = :resource " +
             "and userRole.email = :email " +
             "and userRole.role = :role)")
+    @EntityGraph(value = "user.extended", type = FETCH)
     List<User> findByEmail(@Param("resource") Resource resource, @Param("email") String email,
                            @Param("role") Role role);
 
@@ -46,6 +49,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
         "select userRole.user " +
             "from UserRole userRole " +
             "where userRole.uuid = :uuid")
+    @EntityGraph(value = "user.extended", type = FETCH)
     User findByUserRoleUuid(@Param("uuid") String uuid);
 
     @Query(value =
@@ -53,11 +57,29 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "from User user " +
             "where user.email = :email " +
             "and user.id <> :id")
+    @EntityGraph(value = "user.extended", type = FETCH)
     User findByEmailAndNotId(@Param("email") String email, @Param("id") Long id);
 
+    @EntityGraph(value = "user.extended", type = FETCH)
     User findByOauthProviderAndOauthAccountId(OauthProvider provider, String oauthAccountId);
 
+    @EntityGraph(value = "user.extended", type = FETCH)
     User findByPasswordResetUuid(String passwordResetUuid);
+
+    @Query(value =
+        "select userRole.user " +
+            "from UserRole userRole " +
+            "where userRole.resource = :resource " +
+            "and userRole.role = :role " +
+            "and userRole.user not in (" +
+            "select withoutUserRole.user " +
+            "from UserRole withoutUserRole " +
+            "where withoutUserRole.resource = :withoutResource " +
+            "and withoutUserRole.role = :withoutRole)")
+    @EntityGraph(value = "user.extended", type = FETCH)
+    List<User> findByRoleWithoutRole(
+        @Param("resource") Resource resource, @Param("role") Role role,
+        @Param("withoutResource") Resource withoutResource, @Param("withoutRole") Role withoutRole);
 
     @Query(value =
         "select distinct userRole.user.id " +
@@ -122,20 +144,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
         @Param("resource") Resource resource, @Param("enclosingScope") Scope enclosingScope, @Param("role") Role role,
         @Param("userRoleStates") List<State> userRoleStates, @Param("categoryType") CategoryType categoryType,
         @Param("baseline") LocalDate baseline);
-
-    @Query(value =
-        "select userRole.user " +
-            "from UserRole userRole " +
-            "where userRole.resource = :resource " +
-            "and userRole.role = :role " +
-            "and userRole.user not in (" +
-            "select withoutUserRole.user " +
-            "from UserRole withoutUserRole " +
-            "where withoutUserRole.resource = :withoutResource " +
-            "and withoutUserRole.role = :withoutRole)")
-    List<User> findByRoleWithoutRole(
-        @Param("resource") Resource resource, @Param("role") Role role,
-        @Param("withoutResource") Resource withoutResource, @Param("withoutRole") Role withoutRole);
 
     @Query(value =
         "select userRole.user.id " +

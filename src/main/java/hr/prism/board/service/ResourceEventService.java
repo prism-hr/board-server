@@ -92,10 +92,8 @@ public class ResourceEventService {
     }
 
     @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)
-    public Post processView(Long postId, User user, String ipAddress, boolean recordView) {
-        Post post = (Post) resourceService.getResource(user, POST, postId);
-        if (!recordView) return post;
-
+    public void processView(Post post, User user, String ipAddress, boolean recordView) {
+        if (!recordView) return;
         if (user == null && ipAddress == null) {
             throw new BoardException(UNIDENTIFIABLE_RESOURCE_EVENT, "No way to identify post viewer");
         }
@@ -133,7 +131,6 @@ public class ResourceEventService {
         }
 
         updateResourceEventSummaries(post, role);
-        return post;
     }
 
     @Transactional(propagation = REQUIRES_NEW, isolation = SERIALIZABLE)

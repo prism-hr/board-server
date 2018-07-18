@@ -91,6 +91,9 @@ public class PostServiceIT {
     @SpyBean
     private DocumentService documentService;
 
+    @SpyBean
+    private ResourceEventService resourceEventService;
+
     @After
     public void tearDown() {
         reset(postValidator, actionService, resourceService);
@@ -2045,6 +2048,9 @@ public class PostServiceIT {
 
         verifyPost(post, expectedBoard, expectedName, expectedActions);
         verifyInvocations(user, id, post);
+
+        verify(resourceEventService, times(1))
+            .processView(post, user, "ip", true);
     }
 
     private void verifyGetByIdFailure(User[] users, Long id, Post post) {

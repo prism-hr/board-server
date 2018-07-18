@@ -50,6 +50,8 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
+import hr.prism.board.event.ActivityEvent;
+
 @Service
 @Transactional
 public class PostService {
@@ -113,7 +115,8 @@ public class PostService {
         Post post = (Post) resourceService.getResource(user, POST, id);
         actionService.executeAction(user, post, VIEW, () -> post);
         post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
-        return resourceEventService.processView(id, user, ipAddress, recordView);
+        resourceEventService.processView(post, user, ipAddress, recordView);
+        return post;
     }
 
     public List<Post> getPosts(User user, ResourceFilter filter) {
@@ -185,7 +188,8 @@ public class PostService {
 
         postValidator.checkExistingRelation(createdPost);
         createdPost.setExposeApplyData(actionService.canExecuteAction(createdPost, EDIT));
-        return resourceEventService.processView(createdPost.getId(), user, null, false);
+        resourceEventService.processView(createdPost, user, null, false);
+        return createdPost;
     }
 
     public Post executeAction(User user, Long id, Action action, PostPatchDTO postDTO) {
@@ -210,7 +214,8 @@ public class PostService {
             }
 
             post.setExposeApplyData(actionService.canExecuteAction(post, EDIT));
-            return resourceEventService.processView(id, user, null, false);
+            resourceEventService.processView(post, user, null, false);
+            return post;
         });
     }
 
